@@ -112,6 +112,38 @@ body::before{content:'';position:fixed;inset:0;
 @keyframes flash{0%,100%{opacity:1}40%{opacity:0.2}}
 .flashing{animation:flash .45s ease}
 
+/* ── HALVING ──────────────────────────────────────────── */
+.halving-card{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px;position:relative;overflow:hidden}
+.halving-card::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at top right,rgba(247,147,26,0.07),transparent 65%);
+  pointer-events:none}
+.halving-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+.halving-label{font-family:var(--mono);font-size:9px;color:var(--muted);
+  letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+.halving-date{font-family:var(--mono);font-size:12px;color:var(--gold)}
+.halving-reward{text-align:right}
+.halving-reward-val{font-family:var(--display);font-size:22px;color:var(--gold);letter-spacing:1px}
+.halving-reward-sub{font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:2px}
+.countdown-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.cd-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+  padding:10px 6px;text-align:center}
+.cd-num{font-family:var(--display);font-size:30px;line-height:1;color:var(--gold);letter-spacing:1px}
+.cd-unit{font-family:var(--mono);font-size:9px;color:var(--muted);
+  letter-spacing:1.5px;text-transform:uppercase;margin-top:3px}
+.halving-progress-wrap{margin-bottom:6px}
+.halving-progress-label{display:flex;justify-content:space-between;
+  font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:6px}
+.halving-track{background:var(--surface2);border-radius:6px;height:6px;overflow:hidden}
+.halving-fill{height:100%;border-radius:6px;
+  background:linear-gradient(90deg,var(--gold-dim),var(--gold));
+  transition:width 1s ease}
+.halving-info-row{display:flex;justify-content:space-between;
+  font-family:var(--mono);font-size:10px;padding:8px 0;
+  border-top:1px solid var(--border)}
+.halving-info-key{color:var(--muted)}
+.halving-info-val{color:var(--text)}
+
 /* ── NEWS ─────────────────────────────────────────────── */
 .news-list{display:flex;flex-direction:column;gap:2px}
 .news-item{display:block;background:var(--surface);border:1px solid var(--border);
@@ -129,6 +161,70 @@ body::before{content:'';position:fixed;inset:0;
   padding:20px;text-align:center}
 .news-updated{font-family:var(--mono);font-size:9px;color:var(--muted);
   padding:8px 0 0;text-align:right;letter-spacing:1px}
+.news-tag{display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);
+  font-size:9px;padding:2px 7px;border-radius:4px;letter-spacing:0.5px;font-weight:500}
+.news-tag.institutional{color:#60c8ff;background:rgba(96,200,255,0.1);border:1px solid rgba(96,200,255,0.2)}
+.news-tag.regulatory{color:#c084fc;background:rgba(192,132,252,0.1);border:1px solid rgba(192,132,252,0.2)}
+.news-tag.market{color:var(--gold);background:var(--gold-dim);border:1px solid rgba(247,147,26,0.2)}
+
+/* ── BUY SIGNAL ──────────────────────────────────────────── */
+.signal-card{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px;position:relative;overflow:hidden}
+.signal-top{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.signal-icon{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:24px;flex-shrink:0;transition:all .5s}
+.signal-icon.favorable{background:rgba(0,230,118,0.12);border:2px solid rgba(0,230,118,0.3)}
+.signal-icon.neutral   {background:rgba(247,147,26,0.12);border:2px solid rgba(247,147,26,0.3)}
+.signal-icon.caution   {background:rgba(255,69,69,0.12); border:2px solid rgba(255,69,69,0.3)}
+.signal-icon.loading   {background:var(--surface2);border:2px solid var(--border)}
+.signal-verdict{font-family:var(--display);font-size:22px;letter-spacing:1px;line-height:1.1}
+.signal-verdict.favorable{color:var(--green)}
+.signal-verdict.neutral  {color:var(--gold)}
+.signal-verdict.caution  {color:var(--red)}
+.signal-verdict.loading  {color:var(--muted)}
+.signal-desc{font-family:var(--body);font-size:12px;color:var(--muted);
+  line-height:1.55;margin-bottom:14px}
+.signal-factors{display:flex;flex-direction:column;gap:6px}
+.signal-factor{display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--mono);font-size:10px;padding:7px 10px;
+  background:var(--surface2);border-radius:6px}
+.sf-label{color:var(--muted)}
+.sf-val{font-weight:500}
+.sf-val.good{color:var(--green)}
+.sf-val.mid {color:var(--gold)}
+.sf-val.bad {color:var(--red)}
+.signal-disclaimer{font-family:var(--mono);font-size:9px;color:var(--muted);
+  margin-top:12px;padding-top:10px;border-top:1px solid var(--border);
+  line-height:1.6;letter-spacing:0.3px}
+
+/* ── CALCULATOR ──────────────────────────────────────────── */
+.calc-card{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px}
+.calc-row{display:flex;gap:10px;margin-bottom:10px}
+.calc-field{flex:1;display:flex;flex-direction:column;gap:5px}
+.calc-label{font-family:var(--mono);font-size:9px;color:var(--muted);
+  letter-spacing:1.5px;text-transform:uppercase}
+.calc-input-wrap{position:relative;display:flex;align-items:center}
+.calc-prefix{position:absolute;left:10px;font-family:var(--mono);
+  font-size:13px;color:var(--muted);pointer-events:none}
+.calc-input{width:100%;background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;padding:10px 10px 10px 22px;font-family:var(--mono);
+  font-size:14px;color:var(--text);outline:none;transition:border-color .2s;
+  -webkit-appearance:none}
+.calc-input:focus{border-color:var(--gold)}
+.calc-input::placeholder{color:var(--border)}
+.calc-result{background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;padding:14px;margin-top:4px}
+.calc-result-row{display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--mono);font-size:11px;padding:4px 0}
+.calc-result-row:not(:last-child){border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:4px}
+.calc-result-label{color:var(--muted);font-size:10px}
+.calc-result-val{font-size:14px;font-weight:500}
+.calc-result-val.profit{color:var(--green)}
+.calc-result-val.loss  {color:var(--red)}
+.calc-result-val.neu   {color:var(--muted)}
+.calc-hint{font-family:var(--mono);font-size:9px;color:var(--muted);
+  margin-top:8px;text-align:center;letter-spacing:0.5px}
 </style>
 </head>
 <body>
@@ -228,7 +324,131 @@ body::before{content:'';position:fixed;inset:0;
   </div>
 
   <div class="section">
+    <div class="section-title">Good Time to Buy?</div>
+    <div class="signal-card">
+      <div class="signal-top">
+        <div class="signal-icon loading" id="signalIcon">⏳</div>
+        <div>
+          <div class="signal-verdict loading" id="signalVerdict">Loading…</div>
+        </div>
+      </div>
+      <div class="signal-desc" id="signalDesc">Analyzing market conditions…</div>
+      <div class="signal-factors">
+        <div class="signal-factor">
+          <span class="sf-label">Fear &amp; Greed</span>
+          <span class="sf-val" id="sf-fg">—</span>
+        </div>
+        <div class="signal-factor">
+          <span class="sf-label">24H Price Move</span>
+          <span class="sf-val" id="sf-chg">—</span>
+        </div>
+        <div class="signal-factor">
+          <span class="sf-label">From All-Time High</span>
+          <span class="sf-val" id="sf-ath">—</span>
+        </div>
+        <div class="signal-factor">
+          <span class="sf-label">Overall Signal</span>
+          <span class="sf-val" id="sf-score">—</span>
+        </div>
+      </div>
+      <div class="signal-disclaimer">
+        ⚠ This is a simplified educational indicator, not financial advice.
+        Crypto is volatile. Never invest more than you can afford to lose.
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Profit / Loss Calculator</div>
+    <div class="calc-card">
+      <div class="calc-row">
+        <div class="calc-field">
+          <div class="calc-label">Amount Invested</div>
+          <div class="calc-input-wrap">
+            <span class="calc-prefix">$</span>
+            <input class="calc-input" id="calcInvested" type="number"
+              placeholder="1000" min="0" oninput="calcPL()">
+          </div>
+        </div>
+        <div class="calc-field">
+          <div class="calc-label">Price I Bought At</div>
+          <div class="calc-input-wrap">
+            <span class="calc-prefix">$</span>
+            <input class="calc-input" id="calcBuyPrice" type="number"
+              placeholder="60000" min="0" oninput="calcPL()">
+          </div>
+        </div>
+      </div>
+      <div class="calc-result" id="calcResult">
+        <div class="calc-result-row">
+          <span class="calc-result-label">BTC YOU HOLD</span>
+          <span class="calc-result-val neu" id="cr-btc">—</span>
+        </div>
+        <div class="calc-result-row">
+          <span class="calc-result-label">CURRENT VALUE</span>
+          <span class="calc-result-val neu" id="cr-val">—</span>
+        </div>
+        <div class="calc-result-row">
+          <span class="calc-result-label">PROFIT / LOSS</span>
+          <span class="calc-result-val neu" id="cr-pl">—</span>
+        </div>
+      </div>
+      <div class="calc-hint">Uses live BTC price · Updates automatically</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Next Halving</div>
+    <div class="halving-card">
+      <div class="halving-top">
+        <div>
+          <div class="halving-label">Estimated Date</div>
+          <div class="halving-date" id="halvingDate">~April 2028</div>
+        </div>
+        <div class="halving-reward">
+          <div class="halving-label">New Reward</div>
+          <div class="halving-reward-val">1.5625</div>
+          <div class="halving-reward-sub">BTC per block</div>
+        </div>
+      </div>
+
+      <div class="countdown-grid">
+        <div class="cd-box"><div class="cd-num" id="cd-days">—</div><div class="cd-unit">Days</div></div>
+        <div class="cd-box"><div class="cd-num" id="cd-hours">—</div><div class="cd-unit">Hours</div></div>
+        <div class="cd-box"><div class="cd-num" id="cd-mins">—</div><div class="cd-unit">Mins</div></div>
+        <div class="cd-box"><div class="cd-num" id="cd-secs">—</div><div class="cd-unit">Secs</div></div>
+      </div>
+
+      <div class="halving-progress-wrap">
+        <div class="halving-progress-label">
+          <span>Last Halving · Apr 2024</span>
+          <span id="halvingPct">—% complete</span>
+        </div>
+        <div class="halving-track"><div class="halving-fill" id="halvingFill" style="width:0%"></div></div>
+      </div>
+
+      <div class="halving-info-row">
+        <span class="halving-info-key">Current Reward</span>
+        <span class="halving-info-val">3.125 BTC / block</span>
+      </div>
+      <div class="halving-info-row">
+        <span class="halving-info-key">Halving #</span>
+        <span class="halving-info-val">5th (of 32 total)</span>
+      </div>
+      <div class="halving-info-row">
+        <span class="halving-info-key">What happens?</span>
+        <span class="halving-info-val">New BTC supply cuts 50%</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
     <div class="section-title">Latest News</div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+      <span class="news-tag institutional">🏦 INSTITUTIONAL</span>
+      <span class="news-tag regulatory">⚖️ REGULATION</span>
+      <span class="news-tag market">📈 MARKET</span>
+    </div>
     <div class="news-list" id="newsList">
       <div class="news-loading">Loading news…</div>
     </div>
@@ -240,6 +460,7 @@ body::before{content:'';position:fixed;inset:0;
     <span class="badge">PROXY · CORSPROXY.IO</span>
     <span class="badge">FNG · ALTERNATIVE.ME</span>
     <span class="badge">NEWS · GOOGLE NEWS RSS</span>
+    <span class="badge">HALVING · LOCAL CALC</span>
   </div>
 
   <button class="refresh-btn" id="refreshBtn" onclick="refreshAll()">↻ &nbsp;REFRESH DATA</button>
@@ -285,18 +506,17 @@ async function pfetch(path, attempt=1) {
   try {
     const res = await fetch(PROXY + encodeURIComponent(url));
     if (res.status === 429) {
-      // Rate limited — wait longer and retry
-      if (attempt <= 3) {
-        await sleep(attempt * 2000); // 2s, 4s, 6s
+      if (attempt <= 4) {
+        await sleep(attempt * 3000); // 3s, 6s, 9s, 12s
         return pfetch(path, attempt + 1);
       }
-      throw new Error('Rate limited after 3 retries');
+      throw new Error('rate-limited');
     }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   } catch(e) {
-    if (attempt <= 2) {
-      await sleep(1500);
+    if (attempt <= 2 && !e.message.includes('rate-limited')) {
+      await sleep(2000);
       return pfetch(path, attempt + 1);
     }
     throw e;
@@ -308,11 +528,8 @@ async function getCoin() {
 }
 
 async function getHistory(days) {
-  // Check cache first
   const cached = chartCache[days];
-  if (cached && (Date.now() - cached.ts) < CACHE_TTL) {
-    return cached.data;
-  }
+  if (cached && (Date.now() - cached.ts) < CACHE_TTL) return cached.data;
   const data = await pfetch(`/coins/bitcoin/market_chart?vs_currency=usd&days=${days}`);
   chartCache[days] = { data, ts: Date.now() };
   return data;
@@ -326,18 +543,39 @@ async function getFG() {
   } catch { return null; }
 }
 
+// ─── STALE DATA STORE ────────────────────────────────────
+// Keeps last successful data so we always show something
+const stale = { coin: null, fg: null };
+
+function showStale() {
+  if (stale.coin) {
+    renderPrice(stale.coin, true); // true = mark as stale
+    renderStats(stale.coin);
+  }
+  if (stale.fg) renderFG(stale.fg);
+  // Show stale chart from cache if available
+  const days = parseInt(activeTab.dataset.days);
+  const cached = chartCache[days];
+  if (cached) renderChart(cached.data, days);
+}
+
 // ─── RENDER ──────────────────────────────────────────────
-function renderPrice(md) {
+function renderPrice(md, isStale=false) {
   const price = md.current_price.usd;
   const chg   = md.price_change_percentage_24h;
   const el    = $('priceMain');
   el.textContent = fUSD(price, 2);
-  el.classList.add('live', 'flashing');
-  setTimeout(() => el.classList.remove('flashing'), 500);
+  el.classList.add('live');
+  if (!isStale) {
+    el.classList.add('flashing');
+    setTimeout(() => el.classList.remove('flashing'), 500);
+  }
   const badge = $('priceChange');
   badge.textContent = (chg >= 0 ? '▲ ' : '▼ ') + Math.abs(chg).toFixed(2) + '%';
   badge.className   = 'price-change ' + (chg > 0 ? 'up' : chg < 0 ? 'down' : 'neu');
-  $('priceUpdated').textContent = `CoinGecko · ${nowStr()}`;
+  $('priceUpdated').textContent = isStale
+    ? `⚠ Stale data · retrying…`
+    : `CoinGecko · ${nowStr()}`;
 }
 
 function renderStats(md) {
@@ -417,7 +655,107 @@ function renderFG(fg) {
   $('fgFill').style.width  = val + '%';
 }
 
-// ─── TAB SWITCH — sequential fetch, no simultaneous calls ─
+// ─── BUY SIGNAL ───────────────────────────────────────────
+// Scores 3 factors, each -1 (bad) / 0 (neutral) / +1 (good)
+// Total: +2 to +3 = Favorable, -1 to +1 = Neutral, -2 to -3 = Caution
+function renderSignal(md, fg) {
+  if (!md) return;
+
+  const price    = md.current_price.usd;
+  const ath      = md.ath.usd;
+  const chg24    = md.price_change_percentage_24h;
+  const fgVal    = fg ? parseInt(fg.value) : 50;
+  const pctFromATH = ((ath - price) / ath) * 100;
+
+  // ── Factor 1: Fear & Greed
+  let fgScore = 0, fgLabel = '', fgClass = 'mid';
+  if (fgVal <= 30)      { fgScore = +1; fgLabel = `${fgVal} — Fearful (buy opportunity)`; fgClass='good'; }
+  else if (fgVal <= 55) { fgScore =  0; fgLabel = `${fgVal} — Neutral`;                   fgClass='mid';  }
+  else                  { fgScore = -1; fgLabel = `${fgVal} — Greedy (be cautious)`;       fgClass='bad';  }
+
+  // ── Factor 2: 24H price change
+  let chgScore = 0, chgLabel = '', chgClass = 'mid';
+  if (chg24 <= -5)       { chgScore = +1; chgLabel = `${chg24.toFixed(1)}% (significant dip)`; chgClass='good'; }
+  else if (chg24 <= 2)   { chgScore =  0; chgLabel = `${chg24.toFixed(1)}% (stable)`;          chgClass='mid';  }
+  else                   { chgScore = -1; chgLabel = `+${chg24.toFixed(1)}% (recent run-up)`;   chgClass='bad';  }
+
+  // ── Factor 3: Distance from ATH
+  let athScore = 0, athLabel = '', athClass = 'mid';
+  if (pctFromATH >= 40)      { athScore = +1; athLabel = `${pctFromATH.toFixed(0)}% below ATH (historically cheap)`;  athClass='good'; }
+  else if (pctFromATH >= 15) { athScore =  0; athLabel = `${pctFromATH.toFixed(0)}% below ATH (mid-range)`;           athClass='mid';  }
+  else                       { athScore = -1; athLabel = `${pctFromATH.toFixed(0)}% below ATH (near all-time high)`;   athClass='bad';  }
+
+  // ── Total score
+  const total = fgScore + chgScore + athScore;
+  let verdict, desc, mood, emoji;
+
+  if (total >= 2) {
+    verdict = 'HISTORICALLY FAVORABLE';
+    desc    = 'Multiple indicators suggest this could be a reasonable entry point. Price is down, sentiment is fearful, and BTC is well off its highs — conditions that have historically preceded recoveries.';
+    mood    = 'favorable'; emoji = '✅';
+  } else if (total <= -2) {
+    verdict = 'PROCEED WITH CAUTION';
+    desc    = 'Multiple indicators suggest elevated risk right now. Price is near its all-time high and sentiment is greedy — historically not the best time to buy. Consider waiting for a pullback.';
+    mood    = 'caution'; emoji = '🔴';
+  } else {
+    verdict = 'NEUTRAL — NO STRONG SIGNAL';
+    desc    = 'Conditions are mixed. There\'s no strong historical case for or against buying right now. Dollar-cost averaging (buying a fixed amount regularly) is a common strategy in uncertain conditions.';
+    mood    = 'neutral'; emoji = '⚠️';
+  }
+
+  // Render
+  const icon = $('signalIcon');
+  icon.textContent = emoji;
+  icon.className   = `signal-icon ${mood}`;
+
+  const verd = $('signalVerdict');
+  verd.textContent = verdict;
+  verd.className   = `signal-verdict ${mood}`;
+
+  $('signalDesc').textContent = desc;
+
+  $('sf-fg').textContent    = fgLabel;   $('sf-fg').className    = `sf-val ${fgClass}`;
+  $('sf-chg').textContent   = chgLabel;  $('sf-chg').className   = `sf-val ${chgClass}`;
+  $('sf-ath').textContent   = athLabel;  $('sf-ath').className   = `sf-val ${athClass}`;
+
+  const scoreText = total > 0 ? `+${total} / 3 Positive` : total < 0 ? `${total} / 3 Negative` : '0 / 3 Neutral';
+  const scoreClass = total >= 2 ? 'good' : total <= -2 ? 'bad' : 'mid';
+  $('sf-score').textContent = scoreText;
+  $('sf-score').className   = `sf-val ${scoreClass}`;
+}
+
+// ─── P&L CALCULATOR ───────────────────────────────────────
+// Uses live price from stale store — zero API calls
+function calcPL() {
+  const invested  = parseFloat($('calcInvested').value);
+  const buyPrice  = parseFloat($('calcBuyPrice').value);
+  const livePrice = stale.coin ? stale.coin.current_price.usd : null;
+
+  if (!invested || !buyPrice || buyPrice <= 0 || !livePrice) {
+    $('cr-btc').textContent = '—'; $('cr-btc').className = 'calc-result-val neu';
+    $('cr-val').textContent = '—'; $('cr-val').className = 'calc-result-val neu';
+    $('cr-pl').textContent  = '—'; $('cr-pl').className  = 'calc-result-val neu';
+    return;
+  }
+
+  const btcHeld    = invested / buyPrice;
+  const currentVal = btcHeld * livePrice;
+  const pl         = currentVal - invested;
+  const plPct      = (pl / invested) * 100;
+  const plClass    = pl > 0 ? 'profit' : pl < 0 ? 'loss' : 'neu';
+  const plSign     = pl >= 0 ? '+' : '';
+
+  $('cr-btc').textContent = btcHeld.toFixed(6) + ' BTC';
+  $('cr-btc').className   = 'calc-result-val neu';
+
+  $('cr-val').textContent = fUSD(currentVal, 2);
+  $('cr-val').className   = `calc-result-val ${plClass}`;
+
+  $('cr-pl').textContent  = `${plSign}${fUSD(pl, 2)} (${plSign}${plPct.toFixed(2)}%)`;
+  $('cr-pl').className    = `calc-result-val ${plClass}`;
+}
+
+// ─── TAB SWITCH ───────────────────────────────────────────
 async function switchTab(btn) {
   if (btn === activeTab) return;
   document.querySelectorAll('.time-tab').forEach(t => t.classList.remove('active'));
@@ -426,64 +764,133 @@ async function switchTab(btn) {
 
   const days = parseInt(btn.dataset.days);
 
-  // Show cached chart instantly if available
+  // Always show cached data instantly if available (even stale)
   const cached = chartCache[days];
-  if (cached && (Date.now() - cached.ts) < CACHE_TTL) {
+  if (cached) {
     renderChart(cached.data, days);
-    return;
+    // If fresh enough, done
+    if ((Date.now() - cached.ts) < CACHE_TTL) return;
+    // Otherwise silently refresh in background
+  } else {
+    $('chartMsg').textContent = 'Loading chart…';
+    $('chartMsg').style.display = 'flex';
+    $('priceChart').style.display = 'none';
   }
 
-  $('chartMsg').textContent = 'Loading chart…';
-  $('chartMsg').style.display = 'flex';
-  $('priceChart').style.display = 'none';
-
   try {
-    // Small delay so we don't slam the API right after page load
-    await sleep(600);
+    await sleep(800);
     const data = await getHistory(days);
     renderChart(data, days);
   } catch(e) {
     console.error(e);
-    $('chartMsg').textContent = '⚠ Rate limited — wait a moment and tap again';
-    $('chartMsg').style.display = 'flex';
+    // If we showed stale data above, leave it — just log
+    if (!cached) {
+      $('chartMsg').textContent = '⚠ Rate limited — wait 60s and tap again';
+      $('chartMsg').style.display = 'flex';
+    }
   }
 }
 
-// ─── MAIN REFRESH — sequential not parallel ───────────────
-async function refreshAll() {
+// ─── MAIN REFRESH ─────────────────────────────────────────
+// isFirstLoad = true means use longer delays to avoid burst
+async function refreshAll(isFirstLoad=false) {
   const btn = $('refreshBtn');
   btn.disabled = true;
   btn.textContent = '↻  REFRESHING…';
   $('errorBox').style.display = 'none';
 
+  // On first load, show stale data immediately while we fetch
+  if (isFirstLoad && stale.coin) showStale();
+
   try {
-    // Step 1: coin data
+    // Longer initial delay on first load to avoid bursting CoinGecko
+    if (isFirstLoad) await sleep(1000);
+
+    // Step 1: coin price data
     const coin = await getCoin();
+    stale.coin = coin.market_data; // save for stale fallback
     renderPrice(coin.market_data);
     renderStats(coin.market_data);
 
-    // Step 2: wait a beat, then Fear & Greed (different server, safe)
+    // Step 2: Fear & Greed — different server, safe to fetch right away
     const fg = await getFG();
-    renderFG(fg);
+    if (fg) stale.fg = fg;
+    renderFG(fg || stale.fg);
+    renderSignal(coin.market_data, fg || stale.fg);
 
-    // Step 3: wait, then chart — stagger to avoid rate limit
-    await sleep(800);
+    // Step 3: longer stagger before chart on first load
+    await sleep(isFirstLoad ? 3000 : 1000);
     const days = parseInt(activeTab.dataset.days);
-    // Invalidate 1D cache on refresh so price is current
-    if (days === 1) delete chartCache[1];
+    if (days === 1) delete chartCache[1]; // always refresh 1D
     const hist = await getHistory(days);
     renderChart(hist, days);
 
   } catch(err) {
     console.error(err);
-    $('errorBox').style.display = 'block';
-    $('errorBox').innerHTML = '⚠ Could not load data — CoinGecko may be rate-limiting.<br>Will retry automatically in 90 seconds.';
-    $('priceUpdated').textContent = 'Error — tap Refresh to retry';
+
+    // Show stale data instead of blank error if we have it
+    if (stale.coin) {
+      showStale();
+      // Small non-intrusive warning instead of big red box
+      $('priceUpdated').textContent = '⚠ Stale data · retrying in 90s';
+    } else {
+      // First ever load with no stale data — show the error box
+      $('errorBox').style.display = 'block';
+      $('errorBox').innerHTML = '⚠ CoinGecko rate-limit hit on first load.<br>Retrying automatically — please wait…';
+    }
+
+    // Silent background retry after 30s
+    setTimeout(() => refreshAll(false), 30_000);
+
   } finally {
     btn.disabled = false;
     btn.textContent = '↻  REFRESH DATA';
   }
 }
+
+// ─── HALVING COUNTDOWN ────────────────────────────────────
+// Last halving: April 19, 2024 (block 840,000)
+// Next halving: ~April 17, 2028 (block 1,050,000)
+// Every 210,000 blocks, ~10 min/block = ~4 years
+const LAST_HALVING = new Date('2024-04-19T18:09:00Z').getTime();
+const NEXT_HALVING = new Date('2028-04-17T00:00:00Z').getTime();
+const CYCLE_MS     = NEXT_HALVING - LAST_HALVING;
+
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function tickHalving() {
+  const now       = Date.now();
+  const remaining = NEXT_HALVING - now;
+
+  if (remaining <= 0) {
+    $('cd-days').textContent  = '00';
+    $('cd-hours').textContent = '00';
+    $('cd-mins').textContent  = '00';
+    $('cd-secs').textContent  = '00';
+    $('halvingPct').textContent = '100% complete';
+    $('halvingFill').style.width = '100%';
+    return;
+  }
+
+  const days  = Math.floor(remaining / 86400000);
+  const hours = Math.floor((remaining % 86400000) / 3600000);
+  const mins  = Math.floor((remaining % 3600000)  / 60000);
+  const secs  = Math.floor((remaining % 60000)    / 1000);
+
+  $('cd-days').textContent  = days;
+  $('cd-hours').textContent = pad(hours);
+  $('cd-mins').textContent  = pad(mins);
+  $('cd-secs').textContent  = pad(secs);
+
+  const elapsed = now - LAST_HALVING;
+  const pct     = Math.min(100, (elapsed / CYCLE_MS) * 100).toFixed(1);
+  $('halvingPct').textContent     = pct + '% complete';
+  $('halvingFill').style.width    = pct + '%';
+}
+
+// Tick every second — pure JS math, zero API calls
+tickHalving();
+setInterval(tickHalving, 1000);
 
 // ─── NEWS ─────────────────────────────────────────────────
 const NEWS_URL      = 'https://news.google.com/rss/search?q=bitcoin&hl=en-US&gl=US&ceid=US:en';
@@ -527,6 +934,44 @@ async function fetchNews() {
   }));
 }
 
+// ─── NEWS TAG DETECTION ───────────────────────────────────
+const TAG_RULES = [
+  {
+    type: 'institutional',
+    icon: '🏦',
+    label: 'INSTITUTIONAL',
+    words: ['microstrategy','blackrock','fidelity','tesla','apple','microsoft',
+            'amazon','Goldman','jpmorgan','morgan stanley','ark invest','etf',
+            'treasury','buys','purchased','acquires','holding','investment fund',
+            'hedge fund','institutional','corporation','coinbase','grayscale']
+  },
+  {
+    type: 'regulatory',
+    icon: '⚖️',
+    label: 'REGULATION',
+    words: ['sec','cftc','congress','senate','government','regulation','regulate',
+            'ban','banned','banning','law','legal','illegal','court','ruling',
+            'legislation','policy','federal','irs','tax','sanctions','compliance',
+            'enforcement','white house','treasury dept','financial crimes']
+  },
+  {
+    type: 'market',
+    icon: '📈',
+    label: 'MARKET',
+    words: ['all-time high','ath','crash','surge','rally','dump','dip','bull',
+            'bear','halving','price target','record','volatile','correction',
+            '$100k','$200k','$50k','$80k','$90k']
+  }
+];
+
+function getTag(title) {
+  const lower = title.toLowerCase();
+  for (const rule of TAG_RULES) {
+    if (rule.words.some(w => lower.includes(w))) return rule;
+  }
+  return null;
+}
+
 function renderNews(articles) {
   const list = $('newsList');
   if (!articles.length) {
@@ -534,16 +979,25 @@ function renderNews(articles) {
     return;
   }
 
-  list.innerHTML = articles.map((a, i) => `
-    <a class="news-item" href="${a.link}" target="_blank" rel="noopener"
-       style="animation-delay:${i * 0.04}s">
-      <div class="news-headline">${cleanTitle(a.title)}</div>
-      <div class="news-meta">
-        <span class="news-source">${extractSource(a.title)}</span>
-        <span class="news-time">${a.pubDate ? timeAgo(a.pubDate) : ''}</span>
-      </div>
-    </a>
-  `).join('');
+  list.innerHTML = articles.map((a, i) => {
+    const title  = cleanTitle(a.title);
+    const source = extractSource(a.title);
+    const tag    = getTag(a.title);
+    const tagHtml = tag
+      ? `<span class="news-tag ${tag.type}">${tag.icon} ${tag.label}</span>`
+      : '';
+
+    return `
+      <a class="news-item" href="${a.link}" target="_blank" rel="noopener"
+         style="animation-delay:${i * 0.04}s">
+        <div class="news-headline">${title}</div>
+        <div class="news-meta">
+          ${tagHtml}
+          <span class="news-source">${source}</span>
+          <span class="news-time">${a.pubDate ? timeAgo(a.pubDate) : ''}</span>
+        </div>
+      </a>`;
+  }).join('');
 
   lastNewsTs = Date.now();
   $('newsUpdated').textContent = 'News updated ' + nowStr();
@@ -560,21 +1014,22 @@ async function refreshNews() {
 }
 
 // ─── BOOT ─────────────────────────────────────────────────
-refreshAll();
+refreshAll(true); // first load — uses longer stagger delays
 refreshTimer = setInterval(refreshAll, REFRESH_MS);
 
-// News on its own 10-minute cycle
-refreshNews();
-newsTimer = setInterval(refreshNews, NEWS_REFRESH);
+// News on its own 10-minute cycle — delayed 5s so price loads first
+setTimeout(() => {
+  refreshNews();
+  newsTimer = setInterval(refreshNews, NEWS_REFRESH);
+}, 5000);
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     clearInterval(refreshTimer);
     clearInterval(newsTimer);
   } else {
-    refreshAll();
+    refreshAll(false);
     refreshTimer = setInterval(refreshAll, REFRESH_MS);
-    // Only re-fetch news if it's been more than 5 minutes
     if (Date.now() - lastNewsTs > 5 * 60 * 1000) refreshNews();
     newsTimer = setInterval(refreshNews, NEWS_REFRESH);
   }
