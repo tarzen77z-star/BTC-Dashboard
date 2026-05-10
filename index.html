@@ -543,9 +543,13 @@ async function getCoinLoreOHLCV() {
   const res = await fetch('https://api.coinlore.net/api/coin/ohlcv/?coin=90');
   if (!res.ok) throw new Error(`CoinLore OHLCV ${res.status}`);
   const j = await res.json();
-  // Response is date-keyed object: {"2026-04-08": [ts,open,high,low,close,vol], ...}
-  // Convert to sorted array of [date, candle] pairs, oldest first
-  ohlcvCache = Object.entries(j).sort((a, b) => a[0].localeCompare(b[0]));
+
+  // Response: { "2026-04-08": [ts, open, high, low, close, volume], ... }
+  // Keys come newest-first — sort ascending (oldest → newest) for chart
+  ohlcvCache = Object.entries(j)
+    .sort((a, b) => a[0] < b[0] ? -1 : 1); // sort by date string ascending
+
+  console.log('OHLCV sample:', ohlcvCache.slice(-3)); // debug last 3 rows
   ohlcvFetchTs = Date.now();
   return ohlcvCache;
 }
@@ -605,12 +609,25 @@ function renderStats(coin) {
 // ─── RENDER CHART ─────────────────────────────────────────
 // OHLCV format: [timestamp, open, high, low, close, volume]
 function renderChart(ohlcv, limit) {
-  // ohlcv is array of [dateStr, [ts,open,high,low,close,vol]] sorted oldest→newest
-  const slice  = limit >= 9999 ? ohlcv : ohlcv.slice(-limit);
-  const vals   = slice.map(([date, c]) => c[4]); // close price = index 4
-  const labels = slice.map(([date, c]) => {
-    if (limit >= 1095) return new Date(date).toLocaleDateString('en-US', {year:'numeric', month:'short'});
-    return new Date(date).toLocaleDateString('en-US', {month:'short', day:'numeric'});
+  // ohlcv = [ ["2026-04-08", [ts, open, high, low, close, vol]], ... ] oldest→newest
+  const slice = limit >= 9999 ? ohlcv : ohlcv.slice(-limit);
+
+  // Validate we have real BTC prices — close price should be > 1000
+  const vals = slice.map(([date, candle]) => {
+    const close = parseFloat(candle[4]); // index 4 = close
+    return close;
+  });
+
+  const labels = slice.map(([date, candle]) => {
+    if (limit >= 1095) {
+      // Show month+year for long views
+      const d = new Date(date);
+      return d.toLocaleDateString('en-US', {year:'numeric', month:'short'});
+    }
+    // Show month+day for short views — use date string directly (already YYYY-MM-DD)
+    const parts = date.split('-');
+    const d = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+    return d.toLocaleDateString('en-US', {month:'short', day:'numeric'});
   });
 
   const isUp  = vals[vals.length-1] >= vals[0];
