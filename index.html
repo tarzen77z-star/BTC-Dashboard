@@ -559,7 +559,7 @@ async function getCoinLoreOHLCV() {
   // This function name kept for compatibility — now uses Coinbase candles
   // Default loads 1Y of daily candles
   if (ohlcvCache && (Date.now() - ohlcvFetchTs) < STATS_TTL) return ohlcvCache;
-  ohlcvCache    = await fetchCandles(86400, 365);
+  ohlcvCache    = await fetchCandles(86400, 300); // 300 = Coinbase max
   ohlcvFetchTs  = Date.now();
   return ohlcvCache;
 }
@@ -687,12 +687,12 @@ function renderChart(candles, limit) {
 // ─── TAB CONFIG ───────────────────────────────────────────
 // [granularity seconds, candles to fetch]
 const TAB_CONFIG = {
-  '1':   [3600,  24],   // 1D  — 24 hourly candles
-  '14':  [86400, 14],   // 14D — 14 daily candles
-  '30':  [86400, 30],   // 30D — 30 daily candles
-  '90':  [86400, 90],   // 90D — 90 daily candles
+  '1':   [3600,  24],   // 1D   — 24 hourly candles
+  '14':  [86400, 14],   // 14D  — 14 daily candles
+  '30':  [86400, 30],   // 30D  — 30 daily candles
+  '90':  [86400, 90],   // 90D  — 90 daily candles
   '120': [86400, 120],  // 120D — 120 daily candles
-  '365': [86400, 365],  // 1Y  — 365 daily candles
+  '365': [86400, 300],  // 1Y   — 300 daily candles (Coinbase max per request)
 };
 
 // ─── TAB SWITCH ───────────────────────────────────────────
