@@ -499,10 +499,6 @@ const FNG_URL       = 'https://api.alternative.me/fng/?limit=1';
 const REFRESH_MS    = 60_000;
 const STATS_TTL     = 5 * 60 * 1000;
 
-// ── REPLACE with your Supabase project URL after setup ───
-const SUPABASE_URL  = 'https://YOUR-PROJECT-ID.supabase.co/functions/v1/btc-proxy';
-// ─────────────────────────────────────────────────────────
-
 let chartInst     = null;
 let activeLimit   = 14;
 let ohlcvCache    = null; // full OHLCV array cached after first fetch
@@ -546,7 +542,10 @@ async function getCoinLoreOHLCV() {
   if (ohlcvCache && (Date.now() - ohlcvFetchTs) < STATS_TTL) return ohlcvCache;
   const res = await fetch('https://api.coinlore.net/api/coin/ohlcv/?coin=90');
   if (!res.ok) throw new Error(`CoinLore OHLCV ${res.status}`);
-  ohlcvCache = await res.json();
+  const j = await res.json();
+  // Response is date-keyed object: {"2026-04-08": [ts,open,high,low,close,vol], ...}
+  // Convert to sorted array of [date, candle] pairs, oldest first
+  ohlcvCache = Object.entries(j).sort((a, b) => a[0].localeCompare(b[0]));
   ohlcvFetchTs = Date.now();
   return ohlcvCache;
 }
@@ -606,12 +605,12 @@ function renderStats(coin) {
 // ─── RENDER CHART ─────────────────────────────────────────
 // OHLCV format: [timestamp, open, high, low, close, volume]
 function renderChart(ohlcv, limit) {
+  // ohlcv is array of [dateStr, [ts,open,high,low,close,vol]] sorted oldest→newest
   const slice  = limit >= 9999 ? ohlcv : ohlcv.slice(-limit);
-  const vals   = slice.map(c => c[4]); // close price
-  const labels = slice.map(c => {
-    const d = new Date(c[0] * 1000);
-    if (limit >= 1095) return d.toLocaleDateString('en-US', {year:'numeric', month:'short'});
-    return d.toLocaleDateString('en-US', {month:'short', day:'numeric'});
+  const vals   = slice.map(([date, c]) => c[4]); // close price = index 4
+  const labels = slice.map(([date, c]) => {
+    if (limit >= 1095) return new Date(date).toLocaleDateString('en-US', {year:'numeric', month:'short'});
+    return new Date(date).toLocaleDateString('en-US', {month:'short', day:'numeric'});
   });
 
   const isUp  = vals[vals.length-1] >= vals[0];
@@ -797,8 +796,8 @@ async function refreshAll() {
     const coin = await getCoinLoreStats();
     renderStats(coin);
   } catch(e) {
-    console.warn('Stats unavailable (Supabase not set up yet):', e.message);
-    // Silently skip — expected until Supabase is configured
+    console.warn('Stats unavailable:', e.message);
+    // Silently skip — will retry on next refresh
   }
 
   // 3. CoinLore chart via Supabase — independent
@@ -806,8 +805,8 @@ async function refreshAll() {
     const ohlcv = await getCoinLoreOHLCV();
     renderChart(ohlcv, activeLimit);
   } catch(e) {
-    console.warn('Chart unavailable (Supabase not set up yet):', e.message);
-    $('chartMsg').textContent = '⚠ Add Supabase to enable chart';
+    console.warn('Chart unavailable:', e.message);
+    $('chartMsg').textContent = '⚠ Chart unavailable — tap Refresh to retry';
     $('chartMsg').style.display = 'flex';
     $('priceChart').style.display = 'none';
   }
