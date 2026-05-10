@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#080b10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>BTC Live Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:#080b10; --surface:#0e1420; --surface2:#131a28;
+  --border:#1e2d45; --gold:#f7931a; --gold-dim:rgba(247,147,26,0.13);
+  --gold-glow:rgba(247,147,26,0.38); --green:#00e676; --red:#ff4545;
+  --text:#e8edf5; --muted:#4e6a88;
+  --mono:'Share Tech Mono',monospace; --display:'Bebas Neue',sans-serif;
+  --body:'Inter',sans-serif; --radius:12px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--body);min-height:100dvh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(247,147,26,0.025) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(247,147,26,0.025) 1px,transparent 1px);
+  background-size:44px 44px;pointer-events:none;z-index:0}
+.app{position:relative;z-index:1;max-width:480px;margin:0 auto;padding-bottom:48px}
+.header{padding:22px 20px 16px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;
+  background:rgba(8,11,16,0.93);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.logo{display:flex;align-items:center;gap:11px}
+.btc-icon{width:36px;height:36px;background:var(--gold);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--display);font-size:18px;color:#000;flex-shrink:0;
+  animation:pglow 3s ease-in-out infinite}
+@keyframes pglow{0%,100%{box-shadow:0 0 16px var(--gold-glow)}50%{box-shadow:0 0 30px var(--gold-glow),0 0 55px rgba(247,147,26,0.18)}}
+.logo-text{font-family:var(--display);font-size:22px;letter-spacing:2px}
+.live-badge{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;
+  color:var(--green);background:rgba(0,230,118,0.07);border:1px solid rgba(0,230,118,0.18);
+  padding:4px 10px;border-radius:20px}
+.live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:blink 1.5s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.15}}
+.price-hero{padding:30px 20px 22px;text-align:center}
+.price-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:3.5px;text-transform:uppercase;margin-bottom:8px}
+.price-main{font-family:var(--display);font-size:clamp(48px,14vw,68px);line-height:1;
+  letter-spacing:2px;color:var(--muted);transition:color .5s,text-shadow .5s}
+.price-main.live{color:var(--gold);text-shadow:0 0 40px var(--gold-glow)}
+.price-sub{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+.price-change{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:15px;padding:6px 14px;border-radius:7px}
+.up  {color:var(--green);background:rgba(0,230,118,0.08);border:1px solid rgba(0,230,118,0.22)}
+.down{color:var(--red);  background:rgba(255,69,69,0.08); border:1px solid rgba(255,69,69,0.22)}
+.neu {color:var(--muted);background:var(--surface2);      border:1px solid var(--border)}
+.price-updated{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:10px}
+.error-box{background:rgba(255,69,69,0.07);border:1px solid rgba(255,69,69,0.25);
+  border-radius:var(--radius);padding:13px 16px;margin:0 20px 14px;
+  font-family:var(--mono);font-size:11px;color:var(--red);text-align:center;display:none;line-height:1.7}
+.section{padding:0 20px;margin-bottom:14px}
+.section-title{font-family:var(--display);font-size:14px;letter-spacing:2.5px;
+  color:var(--muted);text-transform:uppercase;margin-bottom:10px;
+  display:flex;align-items:center;gap:8px}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.fg-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.fg-top{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px}
+.fg-score{font-family:var(--display);font-size:52px;line-height:1;transition:color .4s}
+.fg-right{text-align:right}
+.fg-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+.fg-mood{font-family:var(--mono);font-size:13px;margin-top:3px}
+.fg-track{background:var(--surface2);border-radius:6px;height:8px;overflow:hidden}
+.fg-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#ff4545 0%,#ffaa00 45%,#00e676 100%);transition:width 1.2s cubic-bezier(.4,0,.2,1);width:0%}
+.fg-ticks{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:6px}
+.badges{display:flex;gap:6px;padding:0 20px;margin-bottom:14px;flex-wrap:wrap}
+.badge{font-family:var(--mono);font-size:9px;color:var(--muted);background:var(--surface);
+  border:1px solid var(--border);padding:4px 10px;border-radius:20px;letter-spacing:0.5px}
+.refresh-btn{display:block;margin:0 20px;width:calc(100% - 40px);
+  background:var(--gold-dim);border:1px solid var(--gold);color:var(--gold);
+  font-family:var(--mono);font-size:12px;letter-spacing:2.5px;text-transform:uppercase;
+  padding:15px;border-radius:var(--radius);cursor:pointer;transition:all .2s;
+  -webkit-tap-highlight-color:transparent}
+.refresh-btn:hover{background:rgba(247,147,26,0.22);box-shadow:0 0 22px var(--gold-glow)}
+.refresh-btn:active{transform:scale(0.98)}
+.refresh-btn:disabled{opacity:0.5;pointer-events:none}
+.footer{text-align:center;font-family:var(--mono);font-size:9px;
+  color:var(--muted);padding:20px 20px 0;letter-spacing:1px;line-height:1.9}
+.footer a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--border)}
+@keyframes flash{0%,100%{opacity:1}40%{opacity:0.2}}
+.flashing{animation:flash .45s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── STATS ────────────────────────────────────────────── */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 20px;margin-bottom:14px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:15px;position:relative;overflow:hidden;animation:fadeUp .4s ease both}
+.stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--gold),transparent);opacity:0.45}
+.stat-label{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1.5px;
+  text-transform:uppercase;margin-bottom:7px}
+.stat-value{font-family:var(--mono);font-size:14px;color:var(--text)}
+.stat-value.loading{color:var(--border)}
+
+/* ── CHART ────────────────────────────────────────────── */
+.time-tabs{display:flex;gap:6px;margin-bottom:10px}
+.time-tab{font-family:var(--mono);font-size:11px;padding:5px 13px;border-radius:6px;
+  border:1px solid var(--border);background:transparent;color:var(--muted);
+  cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.time-tab.active{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
+.time-tab:active{transform:scale(0.95)}
+.chart-wrap{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px;height:170px;position:relative;overflow:hidden}
+.chart-msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:11px;color:var(--muted)}
+#priceChart{display:none;width:100%!important;height:100%!important}
+
+/* ── MARKET INFO ──────────────────────────────────────── */
+.info-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.info-row{display:flex;justify-content:space-between;align-items:center;
+  padding:13px 16px;border-bottom:1px solid var(--border)}
+.info-row:last-child{border-bottom:none}
+.info-key{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.info-val{font-family:var(--mono);font-size:12px;color:var(--text)}
+
+/* ── HALVING ──────────────────────────────────────────── */
+.halving-card{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px;position:relative;overflow:hidden}
+.halving-card::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at top right,rgba(247,147,26,0.07),transparent 65%);
+  pointer-events:none}
+.halving-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+.halving-label{font-family:var(--mono);font-size:9px;color:var(--muted);
+  letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+.halving-date{font-family:var(--mono);font-size:12px;color:var(--gold)}
+.halving-reward{text-align:right}
+.halving-reward-val{font-family:var(--display);font-size:22px;color:var(--gold);letter-spacing:1px}
+.halving-reward-sub{font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:2px}
+.countdown-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.cd-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+  padding:10px 6px;text-align:center}
+.cd-num{font-family:var(--display);font-size:30px;line-height:1;color:var(--gold);letter-spacing:1px}
+.cd-unit{font-family:var(--mono);font-size:9px;color:var(--muted);
+  letter-spacing:1.5px;text-transform:uppercase;margin-top:3px}
+.halving-progress-wrap{margin-bottom:6px}
+.halving-progress-label{display:flex;justify-content:space-between;
+  font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:6px}
+.halving-track{background:var(--surface2);border-radius:6px;height:6px;overflow:hidden}
+.halving-fill{height:100%;border-radius:6px;
+  background:linear-gradient(90deg,var(--gold-dim),var(--gold));
+  transition:width 1s ease}
+.halving-info-row{display:flex;justify-content:space-between;
+  font-family:var(--mono);font-size:10px;padding:8px 0;
+  border-top:1px solid var(--border)}
+.halving-info-key{color:var(--muted)}
+.halving-info-val{color:var(--text)}
+
+/* ── NEWS ─────────────────────────────────────────────── */
+.news-list{display:flex;flex-direction:column;gap:2px}
+.news-item{display:block;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 16px;text-decoration:none;color:inherit;
+  transition:border-color .2s,background .2s;-webkit-tap-highlight-color:transparent;
+  animation:fadeUp .35s ease both}
+.news-item:active,.news-item:hover{background:var(--surface2);border-color:var(--gold)}
+.news-headline{font-family:var(--body);font-size:13px;font-weight:500;
+  color:var(--text);line-height:1.45;margin-bottom:6px}
+.news-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.news-source{font-family:var(--mono);font-size:9px;color:var(--gold);
+  letter-spacing:1px;text-transform:uppercase}
+.news-time{font-family:var(--mono);font-size:9px;color:var(--muted)}
+.news-loading{font-family:var(--mono);font-size:11px;color:var(--muted);
+  padding:20px;text-align:center}
+.news-updated{font-family:var(--mono);font-size:9px;color:var(--muted);
+  padding:8px 0 0;text-align:right;letter-spacing:1px}
+.news-tag{display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);
+  font-size:9px;padding:2px 7px;border-radius:4px;letter-spacing:0.5px;font-weight:500}
+.news-tag.institutional{color:#60c8ff;background:rgba(96,200,255,0.1);border:1px solid rgba(96,200,255,0.2)}
+.news-tag.regulatory{color:#c084fc;background:rgba(192,132,252,0.1);border:1px solid rgba(192,132,252,0.2)}
+.news-tag.market{color:var(--gold);background:var(--gold-dim);border:1px solid rgba(247,147,26,0.2)}
+
+/* ── BUY SIGNAL ──────────────────────────────────────────── */
+.signal-card{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px;position:relative;overflow:hidden}
+.signal-top{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.signal-icon{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:24px;flex-shrink:0;transition:all .5s}
+.signal-icon.favorable{background:rgba(0,230,118,0.12);border:2px solid rgba(0,230,118,0.3)}
+.signal-icon.neutral   {background:rgba(247,147,26,0.12);border:2px solid rgba(247,147,26,0.3)}
+.signal-icon.caution   {background:rgba(255,69,69,0.12); border:2px solid rgba(255,69,69,0.3)}
+.signal-icon.loading   {background:var(--surface2);border:2px solid var(--border)}
+.signal-verdict{font-family:var(--display);font-size:22px;letter-spacing:1px;line-height:1.1}
+.signal-verdict.favorable{color:var(--green)}
+.signal-verdict.neutral  {color:var(--gold)}
+.signal-verdict.caution  {color:var(--red)}
+.signal-verdict.loading  {color:var(--muted)}
+.signal-desc{font-family:var(--body);font-size:12px;color:var(--muted);
+  line-height:1.55;margin-bottom:14px}
+.signal-factors{display:flex;flex-direction:column;gap:6px}
+.signal-factor{display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--mono);font-size:10px;padding:7px 10px;
+  background:var(--surface2);border-radius:6px}
+.sf-label{color:var(--muted)}
+.sf-val{font-weight:500}
+.sf-val.good{color:var(--green)}
+.sf-val.mid {color:var(--gold)}
+.sf-val.bad {color:var(--red)}
+.signal-disclaimer{font-family:var(--mono);font-size:9px;color:var(--muted);
+  margin-top:12px;padding-top:10px;border-top:1px solid var(--border);
+  line-height:1.6;letter-spacing:0.3px}
+
+/* ── CALCULATOR ──────────────────────────────────────────── */
+.calc-card{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px}
+.calc-row{display:flex;gap:10px;margin-bottom:10px}
+.calc-field{flex:1;display:flex;flex-direction:column;gap:5px}
+.calc-label{font-family:var(--mono);font-size:9px;color:var(--muted);
+  letter-spacing:1.5px;text-transform:uppercase}
+.calc-input-wrap{position:relative;display:flex;align-items:center}
+.calc-prefix{position:absolute;left:10px;font-family:var(--mono);
+  font-size:13px;color:var(--muted);pointer-events:none}
+.calc-input{width:100%;background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;padding:10px 10px 10px 22px;font-family:var(--mono);
+  font-size:14px;color:var(--text);outline:none;transition:border-color .2s;
+  -webkit-appearance:none}
+.calc-input:focus{border-color:var(--gold)}
+.calc-input::placeholder{color:var(--border)}
+.calc-result{background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;padding:14px;margin-top:4px}
+.calc-result-row{display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--mono);font-size:11px;padding:4px 0}
+.calc-result-row:not(:last-child){border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:4px}
+.calc-result-label{color:var(--muted);font-size:10px}
+.calc-result-val{font-size:14px;font-weight:500}
+.calc-result-val.profit{color:var(--green)}
+.calc-result-val.loss  {color:var(--red)}
+.calc-result-val.neu   {color:var(--muted)}
+.calc-hint{font-family:var(--mono);font-size:9px;color:var(--muted);
+  margin-top:8px;text-align:center;letter-spacing:0.5px}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="header">
+    <div class="logo">
+      <div class="btc-icon">₿</div>
+      <div>
+        <span class="logo-text">BTC LIVE</span>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:1px">BY SBB</div>
+      </div>
+    </div>
+    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+  </header>
+
+  <div class="price-hero">
+    <div class="price-label">BITCOIN / USD</div>
+    <div class="price-main" id="priceMain">——</div>
+    <div class="price-sub">
+      <span class="price-change neu" id="priceChange">— %</span>
+    </div>
+    <div class="price-updated" id="priceUpdated">Connecting…</div>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat-card" style="animation-delay:.05s">
+      <div class="stat-label">24H CHANGE</div>
+      <div class="stat-value loading" id="s-chg">——</div>
+    </div>
+    <div class="stat-card" style="animation-delay:.10s">
+      <div class="stat-label">7D CHANGE</div>
+      <div class="stat-value loading" id="s-7d">——</div>
+    </div>
+    <div class="stat-card" style="animation-delay:.15s">
+      <div class="stat-label">MKT CAP</div>
+      <div class="stat-value loading" id="s-cap">——</div>
+    </div>
+    <div class="stat-card" style="animation-delay:.20s">
+      <div class="stat-label">VOL 24H</div>
+      <div class="stat-value loading" id="s-vol">——</div>
+    </div>
+  </div>
+
+  <!-- CHART -->
+  <div class="section">
+    <div class="section-title">Price Chart</div>
+    <div class="time-tabs">
+      <button class="time-tab active" data-limit="14" onclick="switchTab(this)">14D</button>
+      <button class="time-tab" data-limit="30" onclick="switchTab(this)">30D</button>
+      <button class="time-tab" data-limit="90" onclick="switchTab(this)">90D</button>
+      <button class="time-tab" data-limit="120" onclick="switchTab(this)">120D</button>
+      <button class="time-tab" data-limit="365" onclick="switchTab(this)">1Y</button>
+      <button class="time-tab" data-limit="1095" onclick="switchTab(this)">3Y</button>
+      <button class="time-tab" data-limit="9999" onclick="switchTab(this)">ALL</button>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-msg" id="chartMsg">Loading chart…</div>
+      <canvas id="priceChart"></canvas>
+    </div>
+  </div>
+
+  <!-- MARKET INFO -->
+  <div class="section">
+    <div class="section-title">Market Info</div>
+    <div class="info-card">
+      <div class="info-row">
+        <span class="info-key">Circulating Supply</span>
+        <span class="info-val" id="i-supply">—</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">Max Supply</span>
+        <span class="info-val">21,000,000 BTC</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">Supply Mined</span>
+        <span class="info-val" id="i-pct">—</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Fear &amp; Greed</div>
+    <div class="fg-card">
+      <div class="fg-top">
+        <div class="fg-score" id="fgScore" style="color:var(--muted)">—</div>
+        <div class="fg-right">
+          <div class="fg-label">SENTIMENT INDEX</div>
+          <div class="fg-mood" id="fgMood" style="color:var(--muted)">Loading…</div>
+        </div>
+      </div>
+      <div class="fg-track"><div class="fg-fill" id="fgFill"></div></div>
+      <div class="fg-ticks"><span>Extreme Fear</span><span>Neutral</span><span>Extreme Greed</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Good Time to Buy?</div>
+    <div class="signal-card">
+      <div class="signal-top">
+        <div class="signal-icon loading" id="signalIcon">⏳</div>
+        <div>
+          <div class="signal-verdict loading" id="signalVerdict">Loading…</div>
+        </div>
+      </div>
+      <div class="signal-desc" id="signalDesc">Analyzing market conditions…</div>
+      <div class="signal-factors">
+        <div class="signal-factor">
+          <span class="sf-label">Fear &amp; Greed</span>
+          <span class="sf-val" id="sf-fg">—</span>
+        </div>
+        <div class="signal-factor">
+          <span class="sf-label">24H Price Move</span>
+          <span class="sf-val" id="sf-chg">—</span>
+        </div>
+        <div class="signal-factor">
+          <span class="sf-label">From All-Time High</span>
+          <span class="sf-val" id="sf-ath">—</span>
+        </div>
+        <div class="signal-factor">
+          <span class="sf-label">Overall Signal</span>
+          <span class="sf-val" id="sf-score">—</span>
+        </div>
+      </div>
+      <div class="signal-disclaimer">
+        ⚠ This is a simplified educational indicator, not financial advice.
+        Crypto is volatile. Never invest more than you can afford to lose.
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Profit / Loss Calculator</div>
+    <div class="calc-card">
+      <div class="calc-row">
+        <div class="calc-field">
+          <div class="calc-label">Amount Invested</div>
+          <div class="calc-input-wrap">
+            <span class="calc-prefix">$</span>
+            <input class="calc-input" id="calcInvested" type="number"
+              placeholder="1000" min="0" oninput="calcPL()">
+          </div>
+        </div>
+        <div class="calc-field">
+          <div class="calc-label">Price I Bought At</div>
+          <div class="calc-input-wrap">
+            <span class="calc-prefix">$</span>
+            <input class="calc-input" id="calcBuyPrice" type="number"
+              placeholder="60000" min="0" oninput="calcPL()">
+          </div>
+        </div>
+      </div>
+      <div class="calc-result" id="calcResult">
+        <div class="calc-result-row">
+          <span class="calc-result-label">BTC YOU HOLD</span>
+          <span class="calc-result-val neu" id="cr-btc">—</span>
+        </div>
+        <div class="calc-result-row">
+          <span class="calc-result-label">CURRENT VALUE</span>
+          <span class="calc-result-val neu" id="cr-val">—</span>
+        </div>
+        <div class="calc-result-row">
+          <span class="calc-result-label">PROFIT / LOSS</span>
+          <span class="calc-result-val neu" id="cr-pl">—</span>
+        </div>
+      </div>
+      <div class="calc-hint">Uses live BTC price · Updates automatically</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Next Halving</div>
+    <div class="halving-card">
+      <div class="halving-top">
+        <div>
+          <div class="halving-label">Estimated Date</div>
+          <div class="halving-date" id="halvingDate">~April 2028</div>
+        </div>
+        <div class="halving-reward">
+          <div class="halving-label">New Reward</div>
+          <div class="halving-reward-val">1.5625</div>
+          <div class="halving-reward-sub">BTC per block</div>
+        </div>
+      </div>
+
+      <div class="countdown-grid">
+        <div class="cd-box"><div class="cd-num" id="cd-days">—</div><div class="cd-unit">Days</div></div>
+        <div class="cd-box"><div class="cd-num" id="cd-hours">—</div><div class="cd-unit">Hours</div></div>
+        <div class="cd-box"><div class="cd-num" id="cd-mins">—</div><div class="cd-unit">Mins</div></div>
+        <div class="cd-box"><div class="cd-num" id="cd-secs">—</div><div class="cd-unit">Secs</div></div>
+      </div>
+
+      <div class="halving-progress-wrap">
+        <div class="halving-progress-label">
+          <span>Last Halving · Apr 2024</span>
+          <span id="halvingPct">—% complete</span>
+        </div>
+        <div class="halving-track"><div class="halving-fill" id="halvingFill" style="width:0%"></div></div>
+      </div>
+
+      <div class="halving-info-row">
+        <span class="halving-info-key">Current Reward</span>
+        <span class="halving-info-val">3.125 BTC / block</span>
+      </div>
+      <div class="halving-info-row">
+        <span class="halving-info-key">Halving #</span>
+        <span class="halving-info-val">5th (of 32 total)</span>
+      </div>
+      <div class="halving-info-row">
+        <span class="halving-info-key">What happens?</span>
+        <span class="halving-info-val">New BTC supply cuts 50%</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Latest News</div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+      <span class="news-tag institutional">🏦 INSTITUTIONAL</span>
+      <span class="news-tag regulatory">⚖️ REGULATION</span>
+      <span class="news-tag market">📈 MARKET</span>
+    </div>
+    <div class="news-list" id="newsList">
+      <div class="news-loading">Loading news…</div>
+    </div>
+    <div class="news-updated" id="newsUpdated"></div>
+  </div>
+
+  <div class="badges">
+    <span class="badge">PRICE · COINBASE</span>
+    <span class="badge">STATS · COINLORE (DIRECT TEST)</span>
+    <span class="badge">CHART · COINLORE OHLCV</span>
+    <span class="badge">FNG · ALTERNATIVE.ME</span>
+    <span class="badge">NEWS · GOOGLE NEWS + RSS2JSON</span>
+  </div>
+
+  <button class="refresh-btn" id="refreshBtn" onclick="refreshAll()">↻ &nbsp;REFRESH DATA</button>
+
+  <div class="footer">
+    Price via <a href="https://coinbase.com" target="_blank">Coinbase</a> ·
+    Stats &amp; Chart via <a href="https://coinlore.com" target="_blank">CoinLore</a> + <a href="https://supabase.com" target="_blank">Supabase</a><br>
+    Sentiment via <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank">Alternative.me</a> ·
+    News via <a href="https://news.google.com" target="_blank">Google News</a> + <a href="https://rss2json.com" target="_blank">rss2json</a><br>
+    No API key · No proxy · Works everywhere<br><br>
+    <span style="color:var(--gold);letter-spacing:2px">BTC LIVE · BUILT BY SBB</span>
+  </div>
+
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// ─────────────────────────────────────────────────────────
+//  CONFIG
+//  Coinbase v2     → live price       (open CORS ✅)
+//  CoinLore        → stats + chart    (testing direct CORS)
+//  Alternative.me  → Fear & Greed     (open CORS ✅)
+//  rss2json        → news             (open CORS ✅)
+//  Halving         → local math       (no API)
+// ─────────────────────────────────────────────────────────
+const COINBASE_URL  = 'https://api.coinbase.com/v2/prices/BTC-USD/spot';
+const FNG_URL       = 'https://api.alternative.me/fng/?limit=1';
+const REFRESH_MS    = 60_000;
+const STATS_TTL     = 5 * 60 * 1000;
+
+let chartInst     = null;
+let activeLimit   = 14;
+let ohlcvCache    = null; // full OHLCV array cached after first fetch
+let ohlcvFetchTs  = 0;
+let statsCache    = null;
+let statsFetchTs  = 0;
+let refreshTimer  = null;
+
+const $        = id => document.getElementById(id);
+const fUSD     = (n,d=2) => '$'+parseFloat(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fCompact = n => { n=parseFloat(n); if(n>=1e12)return'$'+(n/1e12).toFixed(2)+'T'; if(n>=1e9)return'$'+(n/1e9).toFixed(2)+'B'; if(n>=1e6)return'$'+(n/1e6).toFixed(2)+'M'; return fUSD(n,0); };
+const nowStr   = () => new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+const fgCol    = v => v<=25?'var(--red)':v<=45?'#ffaa00':v<=55?'var(--text)':v<=75?'#66dd88':'var(--green)';
+const setVal   = (id,v) => { const e=$(id); e.textContent=v; e.classList.remove('loading'); };
+const sleep    = ms => new Promise(r => setTimeout(r, ms));
+
+// ─── STALE STORE ──────────────────────────────────────────
+const stale = { price: null, fg: null };
+
+// ─── FETCH ────────────────────────────────────────────────
+async function getCoinbasePrice() {
+  // Coinbase v2 has explicit open CORS — confirmed works from browsers
+  const res = await fetch(COINBASE_URL);
+  if (!res.ok) throw new Error(`Coinbase ${res.status}`);
+  const j = await res.json();
+  // Response: { data: { base, currency, amount } }
+  return { price: parseFloat(j.data.amount) };
+}
+
+async function getCoinLoreStats() {
+  if (statsCache && (Date.now() - statsFetchTs) < STATS_TTL) return statsCache;
+  const res = await fetch('https://api.coinlore.net/api/ticker/?id=90');
+  if (!res.ok) throw new Error(`CoinLore stats ${res.status}`);
+  const j = await res.json();
+  statsCache = j[0];
+  statsFetchTs = Date.now();
+  return statsCache;
+}
+
+async function getCoinLoreOHLCV() {
+  if (ohlcvCache && (Date.now() - ohlcvFetchTs) < STATS_TTL) return ohlcvCache;
+
+  // Use Coinbase spot price with ?date= parameter — same API already working ✅
+  // Fetch daily closing prices for the last 365 days in parallel batches
+  const today = new Date();
+  const dates = [];
+  for (let i = 365; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const yyyy = d.getFullYear();
+    const mm   = String(d.getMonth() + 1).padStart(2, '0');
+    const dd   = String(d.getDate()).padStart(2, '0');
+    dates.push(`${yyyy}-${mm}-${dd}`);
+  }
+
+  // Fetch in batches of 10 to avoid overwhelming Coinbase
+  const results = [];
+  for (let i = 0; i < dates.length; i += 10) {
+    const batch = dates.slice(i, i + 10);
+    const prices = await Promise.all(
+      batch.map(async date => {
+        try {
+          const r = await fetch(`https://api.coinbase.com/v2/prices/BTC-USD/spot?date=${date}`);
+          if (!r.ok) return null;
+          const j = await r.json();
+          return [date, parseFloat(j.data.amount)];
+        } catch { return null; }
+      })
+    );
+    results.push(...prices.filter(Boolean));
+  }
+
+  ohlcvCache = results; // [[date, price], ...] oldest→newest
+  ohlcvFetchTs = Date.now();
+
+  // Debug
+  const last3 = ohlcvCache.slice(-3);
+  last3.forEach(([date, price]) => console.log(`${date} → $${price}`));
+
+  return ohlcvCache;
+}
+
+async function getFG() {
+  try {
+    const r = await fetch(FNG_URL);
+    if (!r.ok) return null;
+    return (await r.json()).data[0];
+  } catch { return null; }
+}
+
+// ─── RENDER PRICE ─────────────────────────────────────────
+function renderPrice(priceData, isStale=false) {
+  const el = $('priceMain');
+  el.textContent = fUSD(priceData.price, 2);
+  el.classList.add('live');
+  if (!isStale) {
+    el.classList.add('flashing');
+    setTimeout(() => el.classList.remove('flashing'), 500);
+  }
+  $('priceUpdated').textContent = isStale
+    ? '⚠ Stale data · retrying…'
+    : `Coinbase · ${nowStr()}`;
+}
+
+// ─── RENDER STATS ─────────────────────────────────────────
+function renderStats(coin) {
+  const chg24 = parseFloat(coin.percent_change_24h);
+  const chg7d = parseFloat(coin.percent_change_7d);
+  const arrow = v => v >= 0 ? '▲' : '▼';
+  const cls   = v => v >= 0 ? 'color:var(--green)' : 'color:var(--red)';
+
+  // 24h change
+  const chgEl = $('s-chg');
+  chgEl.innerHTML = `<span style="${cls(chg24)}">${arrow(chg24)} ${Math.abs(chg24).toFixed(2)}%</span>`;
+  chgEl.classList.remove('loading');
+
+  // 7d change
+  const chg7El = $('s-7d');
+  chg7El.innerHTML = `<span style="${cls(chg7d)}">${arrow(chg7d)} ${Math.abs(chg7d).toFixed(2)}%</span>`;
+  chg7El.classList.remove('loading');
+
+  setVal('s-cap', fCompact(parseFloat(coin.market_cap_usd)));
+  setVal('s-vol', fCompact(parseFloat(coin.volume24)));
+
+  const supply = parseFloat(coin.csupply);
+  setVal('i-supply', supply.toLocaleString('en-US', {maximumFractionDigits:0}) + ' BTC');
+  setVal('i-pct', ((supply / 21_000_000) * 100).toFixed(2) + '% mined');
+
+  // Also update 24h badge on price hero
+  const badge = $('priceChange');
+  badge.textContent = `${arrow(chg24)} ${Math.abs(chg24).toFixed(2)}%`;
+  badge.className = 'price-change ' + (chg24 > 0 ? 'up' : chg24 < 0 ? 'down' : 'neu');
+}
+
+// ─── RENDER CHART ─────────────────────────────────────────
+// OHLCV format: [timestamp, open, high, low, close, volume]
+function renderChart(ohlcv, limit) {
+  // ohlcv = [ ["2026-04-08", 81307.16], ... ] oldest→newest
+  const slice = limit >= 9999 ? ohlcv : ohlcv.slice(-limit);
+
+  const vals   = slice.map(([date, price]) => price);
+  const labels = slice.map(([date, price]) => {
+    const [year, month, day] = date.split('-').map(Number);
+    const d = new Date(year, month - 1, day);
+    if (limit >= 1095) {
+      return d.toLocaleDateString('en-US', {year:'numeric', month:'short'});
+    }
+    return d.toLocaleDateString('en-US', {month:'short', day:'numeric'});
+  });
+
+  const isUp  = vals[vals.length-1] >= vals[0];
+  const color = isUp ? '#00e676' : '#ff4545';
+  const step  = Math.max(1, Math.floor(slice.length / 7));
+  const sparse = labels.map((l,i) => i % step === 0 ? l : '');
+
+  $('chartMsg').style.display = 'none';
+  const canvas = $('priceChart');
+  canvas.style.display = 'block';
+  if (chartInst) chartInst.destroy();
+
+  chartInst = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: sparse,
+      datasets: [{
+        data: vals, borderColor: color, borderWidth: 1.8, fill: true,
+        backgroundColor: ctx => {
+          const g = ctx.chart.ctx.createLinearGradient(0,0,0,140);
+          g.addColorStop(0, isUp ? 'rgba(0,230,118,0.18)' : 'rgba(255,69,69,0.18)');
+          g.addColorStop(1, 'transparent');
+          return g;
+        },
+        tension: 0.4, pointRadius: 0
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: {duration:600, easing:'easeInOutQuart'},
+      interaction: {mode:'index', intersect:false},
+      plugins: {
+        legend: {display:false},
+        tooltip: {
+          backgroundColor:'#0e1420', borderColor:'#1e2d45', borderWidth:1,
+          titleColor:'#4e6a88', bodyColor:color,
+          titleFont:{family:'Share Tech Mono',size:10},
+          bodyFont:{family:'Share Tech Mono',size:13},
+          callbacks: {label: c => ' ' + fUSD(c.parsed.y, 2)}
+        }
+      },
+      scales: {
+        x: {ticks:{color:'#4e6a88',font:{family:'Share Tech Mono',size:9},maxRotation:0,maxTicksLimit:6}, grid:{color:'rgba(30,45,69,0.4)'}, border:{display:false}},
+        y: {position:'right', ticks:{color:'#4e6a88',font:{family:'Share Tech Mono',size:9},callback:v=>'$'+(v>=1000?(v/1000).toFixed(0)+'k':v)}, grid:{color:'rgba(30,45,69,0.4)'}, border:{display:false}}
+      }
+    }
+  });
+}
+
+// ─── TAB SWITCH ───────────────────────────────────────────
+async function switchTab(btn) {
+  activeLimit = parseInt(btn.dataset.limit);
+  document.querySelectorAll('.time-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  if (ohlcvCache) {
+    renderChart(ohlcvCache, activeLimit);
+  } else {
+    $('chartMsg').textContent = 'Loading…';
+    $('chartMsg').style.display = 'flex';
+    $('priceChart').style.display = 'none';
+    try {
+      const ohlcv = await getCoinLoreOHLCV();
+      renderChart(ohlcv, activeLimit);
+    } catch { $('chartMsg').textContent = '⚠ Chart unavailable'; }
+  }
+}
+
+// ─── RENDER FEAR & GREED ──────────────────────────────────
+function renderFG(fg) {
+  if (!fg) { $('fgMood').textContent = 'Unavailable'; return; }
+  const val = parseInt(fg.value);
+  const col = fgCol(val);
+  $('fgScore').textContent = val;
+  $('fgScore').style.color = col;
+  $('fgMood').textContent  = fg.value_classification.toUpperCase();
+  $('fgMood').style.color  = col;
+  $('fgFill').style.width  = val + '%';
+}
+
+// ─── BUY SIGNAL ───────────────────────────────────────────
+// Only uses Fear & Greed now (no CoinGecko dependency)
+function renderSignal(fg) {
+  const fgVal = fg ? parseInt(fg.value) : null;
+  if (fgVal === null) return;
+
+  let verdict, desc, mood, emoji;
+  if (fgVal <= 25) {
+    verdict = 'HISTORICALLY FAVORABLE';
+    desc    = 'Extreme fear in the market. Historically, periods of extreme fear have often preceded price recoveries. Many experienced investors view this as a potential buying opportunity.';
+    mood    = 'favorable'; emoji = '✅';
+  } else if (fgVal <= 45) {
+    verdict = 'MILD FEAR — WATCH CLOSELY';
+    desc    = 'The market is leaning fearful. Sentiment is cautious but not extreme. Dollar-cost averaging (buying small fixed amounts regularly) is a common strategy in these conditions.';
+    mood    = 'neutral'; emoji = '⚠️';
+  } else if (fgVal <= 60) {
+    verdict = 'NEUTRAL — NO STRONG SIGNAL';
+    desc    = 'Sentiment is balanced. No strong historical signal either way. Consider your own investment timeline and risk tolerance before making a decision.';
+    mood    = 'neutral'; emoji = '⚠️';
+  } else if (fgVal <= 80) {
+    verdict = 'GREED — PROCEED WITH CAUTION';
+    desc    = 'The market is feeling greedy. Historically, elevated greed has sometimes preceded corrections. This doesn\'t mean a drop is certain, but caution is warranted.';
+    mood    = 'caution'; emoji = '🔴';
+  } else {
+    verdict = 'EXTREME GREED — HIGH CAUTION';
+    desc    = 'Extreme greed in the market. Historically one of the riskier times to buy. Many experienced investors reduce exposure or wait during periods of extreme greed.';
+    mood    = 'caution'; emoji = '🔴';
+  }
+
+  const icon = $('signalIcon');
+  icon.textContent = emoji;
+  icon.className   = `signal-icon ${mood}`;
+  const verd = $('signalVerdict');
+  verd.textContent = verdict;
+  verd.className   = `signal-verdict ${mood}`;
+  $('signalDesc').textContent = desc;
+
+  // Update the Fear & Greed factor row
+  $('sf-fg').textContent = `${fgVal} — ${fg.value_classification}`;
+  $('sf-fg').className   = fgVal <= 45 ? 'sf-val good' : fgVal <= 60 ? 'sf-val mid' : 'sf-val bad';
+
+  // Hide CoinGecko-dependent rows
+  $('sf-chg').textContent = 'Requires stats (coming soon)';
+  $('sf-chg').className   = 'sf-val mid';
+  $('sf-ath').textContent = 'Requires stats (coming soon)';
+  $('sf-ath').className   = 'sf-val mid';
+
+  const scoreClass = mood === 'favorable' ? 'good' : mood === 'caution' ? 'bad' : 'mid';
+  $('sf-score').textContent = mood === 'favorable' ? 'Positive' : mood === 'caution' ? 'Negative' : 'Neutral';
+  $('sf-score').className   = `sf-val ${scoreClass}`;
+}
+
+// ─── P&L CALCULATOR ───────────────────────────────────────
+function calcPL() {
+  const invested  = parseFloat($('calcInvested').value);
+  const buyPrice  = parseFloat($('calcBuyPrice').value);
+  const livePrice = stale.price ? stale.price.price : null;
+
+  if (!invested || !buyPrice || buyPrice <= 0 || !livePrice) {
+    $('cr-btc').textContent = '—'; $('cr-btc').className = 'calc-result-val neu';
+    $('cr-val').textContent = '—'; $('cr-val').className = 'calc-result-val neu';
+    $('cr-pl').textContent  = '—'; $('cr-pl').className  = 'calc-result-val neu';
+    return;
+  }
+
+  const btcHeld    = invested / buyPrice;
+  const currentVal = btcHeld * livePrice;
+  const pl         = currentVal - invested;
+  const plPct      = (pl / invested) * 100;
+  const plClass    = pl > 0 ? 'profit' : pl < 0 ? 'loss' : 'neu';
+  const plSign     = pl >= 0 ? '+' : '';
+
+  $('cr-btc').textContent = btcHeld.toFixed(6) + ' BTC';
+  $('cr-btc').className   = 'calc-result-val neu';
+  $('cr-val').textContent = fUSD(currentVal, 2);
+  $('cr-val').className   = `calc-result-val ${plClass}`;
+  $('cr-pl').textContent  = `${plSign}${fUSD(pl, 2)} (${plSign}${plPct.toFixed(2)}%)`;
+  $('cr-pl').className    = `calc-result-val ${plClass}`;
+}
+
+// ─── MAIN REFRESH ─────────────────────────────────────────
+// Each section fetches independently — one failure won't block others
+async function refreshAll() {
+  const btn = $('refreshBtn');
+  btn.disabled = true;
+  btn.textContent = '↻  REFRESHING…';
+  $('errorBox').style.display = 'none';
+
+  let anyError = false;
+
+  // 1. Coinbase price — independent
+  try {
+    const cd = await getCoinbasePrice();
+    stale.price = cd;
+    renderPrice(cd);
+  } catch(e) {
+    console.error('Price error:', e);
+    if (stale.price) renderPrice(stale.price, true);
+    else { $('priceUpdated').textContent = '⚠ Price unavailable'; anyError = true; }
+  }
+
+  // 2. CoinLore stats via Supabase — independent
+  try {
+    const coin = await getCoinLoreStats();
+    renderStats(coin);
+  } catch(e) {
+    console.warn('Stats unavailable:', e.message);
+    // Silently skip — will retry on next refresh
+  }
+
+  // 3. CoinLore chart via Supabase — independent
+  try {
+    const ohlcv = await getCoinLoreOHLCV();
+    renderChart(ohlcv, activeLimit);
+  } catch(e) {
+    console.warn('Chart unavailable:', e.message);
+    $('chartMsg').textContent = '⚠ Chart unavailable — tap Refresh to retry';
+    $('chartMsg').style.display = 'flex';
+    $('priceChart').style.display = 'none';
+  }
+
+  // 4. Fear & Greed — independent
+  try {
+    const fg = await getFG();
+    if (fg) stale.fg = fg;
+    renderFG(fg || stale.fg);
+    renderSignal(fg || stale.fg);
+  } catch(e) {
+    console.error('FG error:', e);
+    if (stale.fg) { renderFG(stale.fg); renderSignal(stale.fg); }
+    else $('fgMood').textContent = 'Unavailable';
+  }
+
+  btn.disabled = false;
+  btn.textContent = '↻  REFRESH DATA';
+}
+
+// ─── HALVING COUNTDOWN ────────────────────────────────────
+// Last halving: April 19, 2024 (block 840,000)
+// Next halving: ~April 17, 2028 (block 1,050,000)
+// Every 210,000 blocks, ~10 min/block = ~4 years
+const LAST_HALVING = new Date('2024-04-19T18:09:00Z').getTime();
+const NEXT_HALVING = new Date('2028-04-17T00:00:00Z').getTime();
+const CYCLE_MS     = NEXT_HALVING - LAST_HALVING;
+
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function tickHalving() {
+  const now       = Date.now();
+  const remaining = NEXT_HALVING - now;
+
+  if (remaining <= 0) {
+    $('cd-days').textContent  = '00';
+    $('cd-hours').textContent = '00';
+    $('cd-mins').textContent  = '00';
+    $('cd-secs').textContent  = '00';
+    $('halvingPct').textContent = '100% complete';
+    $('halvingFill').style.width = '100%';
+    return;
+  }
+
+  const days  = Math.floor(remaining / 86400000);
+  const hours = Math.floor((remaining % 86400000) / 3600000);
+  const mins  = Math.floor((remaining % 3600000)  / 60000);
+  const secs  = Math.floor((remaining % 60000)    / 1000);
+
+  $('cd-days').textContent  = days;
+  $('cd-hours').textContent = pad(hours);
+  $('cd-mins').textContent  = pad(mins);
+  $('cd-secs').textContent  = pad(secs);
+
+  const elapsed = now - LAST_HALVING;
+  const pct     = Math.min(100, (elapsed / CYCLE_MS) * 100).toFixed(1);
+  $('halvingPct').textContent     = pct + '% complete';
+  $('halvingFill').style.width    = pct + '%';
+}
+
+// Tick every second — pure JS math, zero API calls
+tickHalving();
+setInterval(tickHalving, 1000);
+
+// ─── NEWS ─────────────────────────────────────────────────
+// rss2json.com converts Google News RSS → JSON with open CORS
+// Free tier: 10,000 requests/month — plenty for 10min refresh
+const GOOGLE_NEWS_RSS = 'https://news.google.com/rss/search?q=bitcoin&hl=en-US&gl=US&ceid=US:en';
+const NEWS_URL        = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(GOOGLE_NEWS_RSS)}`;
+const NEWS_REFRESH    = 10 * 60 * 1000; // 10 minutes
+let newsTimer         = null;
+let lastNewsTs        = 0;
+
+function timeAgo(dateStr) {
+  const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+  if (diff < 60)    return diff + 's ago';
+  if (diff < 3600)  return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  return Math.floor(diff/86400) + 'd ago';
+}
+
+async function fetchNews() {
+  const res = await fetch(NEWS_URL);
+  if (!res.ok) throw new Error(`rss2json ${res.status}`);
+  const j = await res.json();
+  if (j.status !== 'ok') throw new Error('rss2json error: ' + j.message);
+
+  // rss2json returns { status, feed, items: [...] }
+  return j.items.slice(0, 8).map(item => ({
+    title:   item.title   || '',
+    link:    item.link    || '#',
+    source:  item.author  || new URL(item.link).hostname.replace('www.','') || 'News',
+    pubDate: item.pubDate || '',
+  }));
+}
+
+// ─── NEWS TAG DETECTION ───────────────────────────────────
+const TAG_RULES = [
+  {
+    type: 'institutional',
+    icon: '🏦',
+    label: 'INSTITUTIONAL',
+    words: ['microstrategy','blackrock','fidelity','tesla','apple','microsoft',
+            'amazon','Goldman','jpmorgan','morgan stanley','ark invest','etf',
+            'treasury','buys','purchased','acquires','holding','investment fund',
+            'hedge fund','institutional','corporation','coinbase','grayscale']
+  },
+  {
+    type: 'regulatory',
+    icon: '⚖️',
+    label: 'REGULATION',
+    words: ['sec','cftc','congress','senate','government','regulation','regulate',
+            'ban','banned','banning','law','legal','illegal','court','ruling',
+            'legislation','policy','federal','irs','tax','sanctions','compliance',
+            'enforcement','white house','treasury dept','financial crimes']
+  },
+  {
+    type: 'market',
+    icon: '📈',
+    label: 'MARKET',
+    words: ['all-time high','ath','crash','surge','rally','dump','dip','bull',
+            'bear','halving','price target','record','volatile','correction',
+            '$100k','$200k','$50k','$80k','$90k']
+  }
+];
+
+function getTag(title) {
+  const lower = title.toLowerCase();
+  for (const rule of TAG_RULES) {
+    if (rule.words.some(w => lower.includes(w))) return rule;
+  }
+  return null;
+}
+
+function renderNews(articles) {
+  const list = $('newsList');
+  if (!articles.length) {
+    list.innerHTML = '<div class="news-loading">No news found</div>';
+    return;
+  }
+
+  list.innerHTML = articles.map((a, i) => {
+    const tag     = getTag(a.title);
+    const tagHtml = tag
+      ? `<span class="news-tag ${tag.type}">${tag.icon} ${tag.label}</span>`
+      : '';
+
+    return `
+      <a class="news-item" href="${a.link}" target="_blank" rel="noopener"
+         style="animation-delay:${i * 0.04}s">
+        <div class="news-headline">${a.title}</div>
+        <div class="news-meta">
+          ${tagHtml}
+          <span class="news-source">${a.source}</span>
+          <span class="news-time">${a.pubDate ? timeAgo(a.pubDate) : ''}</span>
+        </div>
+      </a>`;
+  }).join('');
+
+  lastNewsTs = Date.now();
+  $('newsUpdated').textContent = 'News updated ' + nowStr();
+}
+
+async function refreshNews() {
+  try {
+    const articles = await fetchNews();
+    renderNews(articles);
+  } catch(e) {
+    console.error('News error:', e);
+    $('newsList').innerHTML = '<div class="news-loading">⚠ News unavailable — will retry</div>';
+  }
+}
+
+// ─── BOOT ─────────────────────────────────────────────────
+refreshAll();
+refreshTimer = setInterval(refreshAll, REFRESH_MS);
+
+// News on its own 10-minute cycle — delayed 5s so price loads first
+setTimeout(() => {
+  refreshNews();
+  newsTimer = setInterval(refreshNews, NEWS_REFRESH);
+}, 5000);
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    clearInterval(refreshTimer);
+    clearInterval(newsTimer);
+  } else {
+    refreshAll(false);
+    refreshTimer = setInterval(refreshAll, REFRESH_MS);
+    if (Date.now() - lastNewsTs > 5 * 60 * 1000) refreshNews();
+    newsTimer = setInterval(refreshNews, NEWS_REFRESH);
+  }
+});
+</script>
+</body>
+</html>
