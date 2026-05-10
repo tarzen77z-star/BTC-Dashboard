@@ -111,6 +111,24 @@ body::before{content:'';position:fixed;inset:0;
 .footer a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--border)}
 @keyframes flash{0%,100%{opacity:1}40%{opacity:0.2}}
 .flashing{animation:flash .45s ease}
+
+/* ── NEWS ─────────────────────────────────────────────── */
+.news-list{display:flex;flex-direction:column;gap:2px}
+.news-item{display:block;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 16px;text-decoration:none;color:inherit;
+  transition:border-color .2s,background .2s;-webkit-tap-highlight-color:transparent;
+  animation:fadeUp .35s ease both}
+.news-item:active,.news-item:hover{background:var(--surface2);border-color:var(--gold)}
+.news-headline{font-family:var(--body);font-size:13px;font-weight:500;
+  color:var(--text);line-height:1.45;margin-bottom:6px}
+.news-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.news-source{font-family:var(--mono);font-size:9px;color:var(--gold);
+  letter-spacing:1px;text-transform:uppercase}
+.news-time{font-family:var(--mono);font-size:9px;color:var(--muted)}
+.news-loading{font-family:var(--mono);font-size:11px;color:var(--muted);
+  padding:20px;text-align:center}
+.news-updated{font-family:var(--mono);font-size:9px;color:var(--muted);
+  padding:8px 0 0;text-align:right;letter-spacing:1px}
 </style>
 </head>
 <body>
@@ -209,10 +227,19 @@ body::before{content:'';position:fixed;inset:0;
     </div>
   </div>
 
+  <div class="section">
+    <div class="section-title">Latest News</div>
+    <div class="news-list" id="newsList">
+      <div class="news-loading">Loading news…</div>
+    </div>
+    <div class="news-updated" id="newsUpdated"></div>
+  </div>
+
   <div class="badges">
     <span class="badge">DATA · COINGECKO</span>
     <span class="badge">PROXY · CORSPROXY.IO</span>
     <span class="badge">FNG · ALTERNATIVE.ME</span>
+    <span class="badge">NEWS · GOOGLE NEWS RSS</span>
   </div>
 
   <button class="refresh-btn" id="refreshBtn" onclick="refreshAll()">↻ &nbsp;REFRESH DATA</button>
@@ -221,157 +248,336 @@ body::before{content:'';position:fixed;inset:0;
     Prices via <a href="https://coingecko.com" target="_blank">CoinGecko</a> ·
     CORS via <a href="https://corsproxy.io" target="_blank">corsproxy.io</a> ·
     Sentiment via <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank">Alternative.me</a><br>
-    Auto-refreshes every 60s · No API key required
+    News via <a href="https://news.google.com" target="_blank">Google News RSS</a> ·
+    Auto-refreshes every 90s · News every 10min · No API key required
   </div>
 
 </div>
 <script>
 // ─────────────────────────────────────────────────────────
-//  HOW THIS WORKS:
-//  CoinGecko blocks direct browser requests (CORS).
-//  corsproxy.io is a free, open-source proxy that adds the
-//  correct CORS headers so any browser can call it.
-//  URL format: https://corsproxy.io/?url=<encoded target>
-//  No sign-up, no API key, completely free.
+//  CONFIG
 // ─────────────────────────────────────────────────────────
 const PROXY      = 'https://corsproxy.io/?url=';
 const GECKO_BASE = 'https://api.coingecko.com/api/v3';
 const FNG_URL    = 'https://api.alternative.me/fng/?limit=1';
-const REFRESH_MS = 60_000;
+const REFRESH_MS = 90_000; // 90s — gentler on rate limits
 
-let chartInst    = null;
-let activeTab    = document.querySelector('.time-tab.active');
+let chartInst  = null;
+let activeTab  = document.querySelector('.time-tab.active');
 let refreshTimer = null;
 
-const $       = id => document.getElementById(id);
-const fUSD    = (n,d=2) => '$'+parseFloat(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
-const fCompact = n => { n=parseFloat(n); if(n>=1e12)return'$'+(n/1e12).toFixed(2)+'T'; if(n>=1e9)return'$'+(n/1e9).toFixed(2)+'B'; if(n>=1e6)return'$'+(n/1e6).toFixed(2)+'M'; return fUSD(n,0); };
-const nowStr  = () => new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-const setVal  = (id,v) => { const e=$(id); e.textContent=v; e.classList.remove('loading'); };
-const fgCol   = v => v<=25?'var(--red)':v<=45?'#ffaa00':v<=55?'var(--text)':v<=75?'#66dd88':'var(--green)';
+// Cache: avoid re-fetching chart data the user already loaded
+const chartCache = {}; // { '1': {data, ts}, '7': ... }
+const CACHE_TTL  = 5 * 60 * 1000; // 5 minutes
 
-// Proxy fetch — routes through corsproxy.io to fix CORS
-async function pfetch(path) {
+const $        = id => document.getElementById(id);
+const fUSD     = (n,d=2) => '$'+parseFloat(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fCompact = n => { n=parseFloat(n); if(n>=1e12)return'$'+(n/1e12).toFixed(2)+'T'; if(n>=1e9)return'$'+(n/1e9).toFixed(2)+'B'; if(n>=1e6)return'$'+(n/1e6).toFixed(2)+'M'; return fUSD(n,0); };
+const nowStr   = () => new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+const setVal   = (id,v) => { const e=$(id); e.textContent=v; e.classList.remove('loading'); };
+const fgCol    = v => v<=25?'var(--red)':v<=45?'#ffaa00':v<=55?'var(--text)':v<=75?'#66dd88':'var(--green)';
+const sleep    = ms => new Promise(r => setTimeout(r, ms));
+
+// ─── FETCH with retry ────────────────────────────────────
+// Waits between calls so CoinGecko doesn't rate-limit us
+async function pfetch(path, attempt=1) {
   const url = GECKO_BASE + path;
-  const res = await fetch(PROXY + encodeURIComponent(url));
-  if (!res.ok) throw new Error(`HTTP ${res.status} on ${path}`);
-  return res.json();
+  try {
+    const res = await fetch(PROXY + encodeURIComponent(url));
+    if (res.status === 429) {
+      // Rate limited — wait longer and retry
+      if (attempt <= 3) {
+        await sleep(attempt * 2000); // 2s, 4s, 6s
+        return pfetch(path, attempt + 1);
+      }
+      throw new Error('Rate limited after 3 retries');
+    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  } catch(e) {
+    if (attempt <= 2) {
+      await sleep(1500);
+      return pfetch(path, attempt + 1);
+    }
+    throw e;
+  }
 }
 
 async function getCoin() {
   return pfetch('/coins/bitcoin?localization=false&tickers=false&community_data=false&developer_data=false&sparkline=false');
 }
+
 async function getHistory(days) {
-  return pfetch(`/coins/bitcoin/market_chart?vs_currency=usd&days=${days}`);
-}
-async function getFG() {
-  try { const r=await fetch(FNG_URL); if(!r.ok)return null; return(await r.json()).data[0]; }
-  catch { return null; }
+  // Check cache first
+  const cached = chartCache[days];
+  if (cached && (Date.now() - cached.ts) < CACHE_TTL) {
+    return cached.data;
+  }
+  const data = await pfetch(`/coins/bitcoin/market_chart?vs_currency=usd&days=${days}`);
+  chartCache[days] = { data, ts: Date.now() };
+  return data;
 }
 
+async function getFG() {
+  try {
+    const r = await fetch(FNG_URL);
+    if (!r.ok) return null;
+    return (await r.json()).data[0];
+  } catch { return null; }
+}
+
+// ─── RENDER ──────────────────────────────────────────────
 function renderPrice(md) {
   const price = md.current_price.usd;
   const chg   = md.price_change_percentage_24h;
   const el    = $('priceMain');
-  el.textContent = fUSD(price,2);
-  el.classList.add('live','flashing');
-  setTimeout(()=>el.classList.remove('flashing'),500);
+  el.textContent = fUSD(price, 2);
+  el.classList.add('live', 'flashing');
+  setTimeout(() => el.classList.remove('flashing'), 500);
   const badge = $('priceChange');
-  badge.textContent = (chg>=0?'▲ ':'▼ ')+Math.abs(chg).toFixed(2)+'%';
-  badge.className   = 'price-change '+(chg>0?'up':chg<0?'down':'neu');
-  $('priceUpdated').textContent = `CoinGecko via corsproxy.io · ${nowStr()}`;
+  badge.textContent = (chg >= 0 ? '▲ ' : '▼ ') + Math.abs(chg).toFixed(2) + '%';
+  badge.className   = 'price-change ' + (chg > 0 ? 'up' : chg < 0 ? 'down' : 'neu');
+  $('priceUpdated').textContent = `CoinGecko · ${nowStr()}`;
 }
 
 function renderStats(md) {
-  setVal('s-high', fUSD(md.high_24h.usd,0));
-  setVal('s-low',  fUSD(md.low_24h.usd,0));
+  setVal('s-high', fUSD(md.high_24h.usd, 0));
+  setVal('s-low',  fUSD(md.low_24h.usd,  0));
   setVal('s-cap',  fCompact(md.market_cap.usd));
   setVal('s-vol',  fCompact(md.total_volume.usd));
   const sup = md.circulating_supply;
-  setVal('i-supply', sup.toLocaleString('en-US',{maximumFractionDigits:0})+' BTC');
-  setVal('i-pct',    ((sup/21_000_000)*100).toFixed(2)+'% mined');
-  setVal('i-ath',    fUSD(md.ath.usd,0));
+  setVal('i-supply', sup.toLocaleString('en-US', {maximumFractionDigits:0}) + ' BTC');
+  setVal('i-pct',    ((sup / 21_000_000) * 100).toFixed(2) + '% mined');
+  setVal('i-ath',    fUSD(md.ath.usd, 0));
 }
 
 function renderChart(data, days) {
-  const vals   = data.prices.map(p=>p[1]);
-  const labels = data.prices.map(p=>{
-    const d=new Date(p[0]);
-    return days<=1
-      ? d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})
-      : d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  const vals   = data.prices.map(p => p[1]);
+  const labels = data.prices.map(p => {
+    const d = new Date(p[0]);
+    return days <= 1
+      ? d.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'})
+      : d.toLocaleDateString('en-US', {month:'short', day:'numeric'});
   });
-  const isUp  = vals[vals.length-1]>=vals[0];
-  const color = isUp?'#00e676':'#ff4545';
-  const step  = Math.max(1,Math.floor(labels.length/6));
-  const sparse = labels.map((l,i)=>i%step===0?l:'');
+  const isUp   = vals[vals.length-1] >= vals[0];
+  const color  = isUp ? '#00e676' : '#ff4545';
+  const step   = Math.max(1, Math.floor(labels.length / 6));
+  const sparse = labels.map((l,i) => i % step === 0 ? l : '');
 
-  $('chartMsg').style.display='none';
-  const canvas=$('priceChart'); canvas.style.display='block';
-  if(chartInst) chartInst.destroy();
+  $('chartMsg').style.display = 'none';
+  const canvas = $('priceChart');
+  canvas.style.display = 'block';
+  if (chartInst) chartInst.destroy();
 
-  chartInst = new Chart(canvas,{
-    type:'line',
-    data:{labels:sparse,datasets:[{data:vals,borderColor:color,borderWidth:1.8,fill:true,
-      backgroundColor:ctx=>{const g=ctx.chart.ctx.createLinearGradient(0,0,0,140);g.addColorStop(0,isUp?'rgba(0,230,118,0.18)':'rgba(255,69,69,0.18)');g.addColorStop(1,'transparent');return g;},
-      tension:0.4,pointRadius:0}]},
-    options:{responsive:true,maintainAspectRatio:false,animation:{duration:700,easing:'easeInOutQuart'},
-      interaction:{mode:'index',intersect:false},
-      plugins:{legend:{display:false},tooltip:{backgroundColor:'#0e1420',borderColor:'#1e2d45',borderWidth:1,
-        titleColor:'#4e6a88',bodyColor:color,titleFont:{family:'Share Tech Mono',size:10},
-        bodyFont:{family:'Share Tech Mono',size:13},callbacks:{label:c=>' '+fUSD(c.parsed.y,2)}}},
-      scales:{
-        x:{ticks:{color:'#4e6a88',font:{family:'Share Tech Mono',size:9},maxRotation:0,maxTicksLimit:6},grid:{color:'rgba(30,45,69,0.4)'},border:{display:false}},
-        y:{position:'right',ticks:{color:'#4e6a88',font:{family:'Share Tech Mono',size:9},callback:v=>'$'+(v>=1000?(v/1000).toFixed(0)+'k':v)},grid:{color:'rgba(30,45,69,0.4)'},border:{display:false}}
-      }}
+  chartInst = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: sparse,
+      datasets: [{
+        data: vals, borderColor: color, borderWidth: 1.8, fill: true,
+        backgroundColor: ctx => {
+          const g = ctx.chart.ctx.createLinearGradient(0,0,0,140);
+          g.addColorStop(0, isUp ? 'rgba(0,230,118,0.18)' : 'rgba(255,69,69,0.18)');
+          g.addColorStop(1, 'transparent');
+          return g;
+        },
+        tension: 0.4, pointRadius: 0
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: {duration:700, easing:'easeInOutQuart'},
+      interaction: {mode:'index', intersect:false},
+      plugins: {
+        legend: {display:false},
+        tooltip: {
+          backgroundColor:'#0e1420', borderColor:'#1e2d45', borderWidth:1,
+          titleColor:'#4e6a88', bodyColor:color,
+          titleFont:{family:'Share Tech Mono',size:10},
+          bodyFont:{family:'Share Tech Mono',size:13},
+          callbacks: {label: c => ' ' + fUSD(c.parsed.y, 2)}
+        }
+      },
+      scales: {
+        x: {ticks:{color:'#4e6a88',font:{family:'Share Tech Mono',size:9},maxRotation:0,maxTicksLimit:6}, grid:{color:'rgba(30,45,69,0.4)'}, border:{display:false}},
+        y: {position:'right', ticks:{color:'#4e6a88',font:{family:'Share Tech Mono',size:9},callback:v=>'$'+(v>=1000?(v/1000).toFixed(0)+'k':v)}, grid:{color:'rgba(30,45,69,0.4)'}, border:{display:false}}
+      }
+    }
   });
 }
 
 function renderFG(fg) {
-  if(!fg){$('fgMood').textContent='Unavailable';return;}
-  const val=parseInt(fg.value), col=fgCol(val);
-  $('fgScore').textContent=$('fgScore').style.color=void($('fgScore').style.color=col)||val;
-  $('fgScore').textContent=val; $('fgScore').style.color=col;
-  $('fgMood').textContent=fg.value_classification.toUpperCase(); $('fgMood').style.color=col;
-  $('fgFill').style.width=val+'%';
+  if (!fg) { $('fgMood').textContent = 'Unavailable'; return; }
+  const val = parseInt(fg.value);
+  const col = fgCol(val);
+  $('fgScore').textContent = val;
+  $('fgScore').style.color = col;
+  $('fgMood').textContent  = fg.value_classification.toUpperCase();
+  $('fgMood').style.color  = col;
+  $('fgFill').style.width  = val + '%';
 }
 
+// ─── TAB SWITCH — sequential fetch, no simultaneous calls ─
 async function switchTab(btn) {
-  if(btn===activeTab)return;
-  document.querySelectorAll('.time-tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active'); activeTab=btn;
-  $('chartMsg').textContent='Loading chart…'; $('chartMsg').style.display='flex';
-  $('priceChart').style.display='none';
-  try { renderChart(await getHistory(btn.dataset.days), parseInt(btn.dataset.days)); }
-  catch { $('chartMsg').textContent='Chart unavailable'; }
-}
+  if (btn === activeTab) return;
+  document.querySelectorAll('.time-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  activeTab = btn;
 
-async function refreshAll() {
-  const btn=$('refreshBtn');
-  btn.disabled=true; btn.textContent='↻  REFRESHING…';
-  $('errorBox').style.display='none';
+  const days = parseInt(btn.dataset.days);
+
+  // Show cached chart instantly if available
+  const cached = chartCache[days];
+  if (cached && (Date.now() - cached.ts) < CACHE_TTL) {
+    renderChart(cached.data, days);
+    return;
+  }
+
+  $('chartMsg').textContent = 'Loading chart…';
+  $('chartMsg').style.display = 'flex';
+  $('priceChart').style.display = 'none';
+
   try {
-    const days=parseInt(activeTab.dataset.days);
-    const [coin,fg,hist]=await Promise.all([getCoin(),getFG(),getHistory(days)]);
-    renderPrice(coin.market_data);
-    renderStats(coin.market_data);
-    renderFG(fg);
-    renderChart(hist,days);
-  } catch(err) {
-    console.error(err);
-    $('errorBox').style.display='block';
-    $('errorBox').innerHTML='⚠ Could not load data.<br>corsproxy.io may be rate-limiting. Try again in a moment.';
-    $('priceUpdated').textContent='Error — tap Refresh to retry';
-  } finally {
-    btn.disabled=false; btn.textContent='↻  REFRESH DATA';
+    // Small delay so we don't slam the API right after page load
+    await sleep(600);
+    const data = await getHistory(days);
+    renderChart(data, days);
+  } catch(e) {
+    console.error(e);
+    $('chartMsg').textContent = '⚠ Rate limited — wait a moment and tap again';
+    $('chartMsg').style.display = 'flex';
   }
 }
 
+// ─── MAIN REFRESH — sequential not parallel ───────────────
+async function refreshAll() {
+  const btn = $('refreshBtn');
+  btn.disabled = true;
+  btn.textContent = '↻  REFRESHING…';
+  $('errorBox').style.display = 'none';
+
+  try {
+    // Step 1: coin data
+    const coin = await getCoin();
+    renderPrice(coin.market_data);
+    renderStats(coin.market_data);
+
+    // Step 2: wait a beat, then Fear & Greed (different server, safe)
+    const fg = await getFG();
+    renderFG(fg);
+
+    // Step 3: wait, then chart — stagger to avoid rate limit
+    await sleep(800);
+    const days = parseInt(activeTab.dataset.days);
+    // Invalidate 1D cache on refresh so price is current
+    if (days === 1) delete chartCache[1];
+    const hist = await getHistory(days);
+    renderChart(hist, days);
+
+  } catch(err) {
+    console.error(err);
+    $('errorBox').style.display = 'block';
+    $('errorBox').innerHTML = '⚠ Could not load data — CoinGecko may be rate-limiting.<br>Will retry automatically in 90 seconds.';
+    $('priceUpdated').textContent = 'Error — tap Refresh to retry';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '↻  REFRESH DATA';
+  }
+}
+
+// ─── NEWS ─────────────────────────────────────────────────
+const NEWS_URL      = 'https://news.google.com/rss/search?q=bitcoin&hl=en-US&gl=US&ceid=US:en';
+const NEWS_REFRESH  = 10 * 60 * 1000; // 10 minutes
+let newsTimer       = null;
+let lastNewsTs      = 0;
+
+function timeAgo(dateStr) {
+  const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+  if (diff < 60)   return diff + 's ago';
+  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400)return Math.floor(diff/3600) + 'h ago';
+  return Math.floor(diff/86400) + 'd ago';
+}
+
+function extractSource(title) {
+  // Google News RSS appends " - Source Name" at the end of titles
+  const match = title.match(/ - ([^-]+)$/);
+  return match ? match[1].trim() : 'News';
+}
+
+function cleanTitle(title) {
+  return title.replace(/ - [^-]+$/, '').trim();
+}
+
+async function fetchNews() {
+  const proxyUrl = PROXY + encodeURIComponent(NEWS_URL);
+  const res = await fetch(proxyUrl);
+  if (!res.ok) throw new Error(`News HTTP ${res.status}`);
+  const text = await res.text();
+
+  // Parse XML RSS
+  const parser = new DOMParser();
+  const xml    = parser.parseFromString(text, 'text/xml');
+  const items  = Array.from(xml.querySelectorAll('item')).slice(0, 8);
+
+  return items.map(item => ({
+    title:   item.querySelector('title')?.textContent || '',
+    link:    item.querySelector('link')?.textContent  || '#',
+    pubDate: item.querySelector('pubDate')?.textContent || '',
+  }));
+}
+
+function renderNews(articles) {
+  const list = $('newsList');
+  if (!articles.length) {
+    list.innerHTML = '<div class="news-loading">No news found</div>';
+    return;
+  }
+
+  list.innerHTML = articles.map((a, i) => `
+    <a class="news-item" href="${a.link}" target="_blank" rel="noopener"
+       style="animation-delay:${i * 0.04}s">
+      <div class="news-headline">${cleanTitle(a.title)}</div>
+      <div class="news-meta">
+        <span class="news-source">${extractSource(a.title)}</span>
+        <span class="news-time">${a.pubDate ? timeAgo(a.pubDate) : ''}</span>
+      </div>
+    </a>
+  `).join('');
+
+  lastNewsTs = Date.now();
+  $('newsUpdated').textContent = 'News updated ' + nowStr();
+}
+
+async function refreshNews() {
+  try {
+    const articles = await fetchNews();
+    renderNews(articles);
+  } catch(e) {
+    console.error('News error:', e);
+    $('newsList').innerHTML = '<div class="news-loading">⚠ News unavailable — will retry</div>';
+  }
+}
+
+// ─── BOOT ─────────────────────────────────────────────────
 refreshAll();
-refreshTimer=setInterval(refreshAll,REFRESH_MS);
-document.addEventListener('visibilitychange',()=>{
-  if(document.hidden){clearInterval(refreshTimer);}
-  else{refreshAll();refreshTimer=setInterval(refreshAll,REFRESH_MS);}
+refreshTimer = setInterval(refreshAll, REFRESH_MS);
+
+// News on its own 10-minute cycle
+refreshNews();
+newsTimer = setInterval(refreshNews, NEWS_REFRESH);
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    clearInterval(refreshTimer);
+    clearInterval(newsTimer);
+  } else {
+    refreshAll();
+    refreshTimer = setInterval(refreshAll, REFRESH_MS);
+    // Only re-fetch news if it's been more than 5 minutes
+    if (Date.now() - lastNewsTs > 5 * 60 * 1000) refreshNews();
+    newsTimer = setInterval(refreshNews, NEWS_REFRESH);
+  }
 });
 </script>
 </body>
