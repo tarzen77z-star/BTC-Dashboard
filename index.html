@@ -470,10 +470,10 @@ body::before{content:'';position:fixed;inset:0;
 
   <div class="badges">
     <span class="badge">PRICE · COINDESK</span>
-    <span class="badge">STATS · COINLORE</span>
-    <span class="badge">CHART · COINLORE OHLCV</span>
+    <span class="badge">STATS · COINLORE VIA SUPABASE</span>
+    <span class="badge">CHART · COINLORE VIA SUPABASE</span>
     <span class="badge">FNG · ALTERNATIVE.ME</span>
-    <span class="badge">NEWS · CRYPTOCURRENCY.CV</span>
+    <span class="badge">NEWS · GOOGLE NEWS + RSS2JSON</span>
     <span class="badge">ZERO PROXIES ✅</span>
   </div>
 
@@ -481,9 +481,9 @@ body::before{content:'';position:fixed;inset:0;
 
   <div class="footer">
     Price via <a href="https://coindesk.com" target="_blank">CoinDesk</a> ·
-    Stats &amp; Chart via <a href="https://coinlore.com" target="_blank">CoinLore</a><br>
+    Stats &amp; Chart via <a href="https://coinlore.com" target="_blank">CoinLore</a> + <a href="https://supabase.com" target="_blank">Supabase</a><br>
     Sentiment via <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank">Alternative.me</a> ·
-    News via <a href="https://cryptocurrency.cv" target="_blank">cryptocurrency.cv</a><br>
+    News via <a href="https://news.google.com" target="_blank">Google News</a> + <a href="https://rss2json.com" target="_blank">rss2json</a><br>
     No API key · No proxy · Works everywhere<br><br>
     <span style="color:var(--gold);letter-spacing:2px">BTC LIVE · BUILT BY SBB</span>
   </div>
@@ -493,18 +493,21 @@ body::before{content:'';position:fixed;inset:0;
 <script>
 // ─────────────────────────────────────────────────────────
 //  CONFIG — 100% proxy-free ✅
-//  CoinDesk        → live price  (no proxy)
-//  CoinLore        → stats + chart (no proxy, open CORS)
-//  Alternative.me  → Fear & Greed (no proxy)
-//  cryptocurrency.cv → news       (no proxy)
-//  Halving          → local math  (no API)
+//  CoinDesk        → live price       (no proxy, open CORS)
+//  Supabase Edge   → stats + chart    (your own backend)
+//  Alternative.me  → Fear & Greed     (no proxy, open CORS)
+//  cryptocurrency.cv → news           (no proxy, open CORS)
+//  Halving          → local math      (no API)
 // ─────────────────────────────────────────────────────────
 const COINDESK_URL  = 'https://api.coindesk.com/v1/bpi/currentprice/USD.json';
-const COINLORE_TICK = 'https://api.coinlore.net/api/ticker/?id=90';
-const COINLORE_OHLC = 'https://api.coinlore.net/api/coin/ohlcv/?coin=90';
 const FNG_URL       = 'https://api.alternative.me/fng/?limit=1';
 const REFRESH_MS    = 60_000;
-const STATS_TTL     = 5 * 60 * 1000; // re-fetch stats every 5 min
+const STATS_TTL     = 5 * 60 * 1000;
+
+// ── REPLACE THIS with your Supabase project URL ──────────
+// Find it in: Supabase Dashboard → Settings → API → Project URL
+const SUPABASE_URL  = 'https://YOUR-PROJECT-ID.supabase.co/functions/v1/btc-proxy';
+// ─────────────────────────────────────────────────────────
 
 let chartInst     = null;
 let activeLimit   = 14;
@@ -535,8 +538,8 @@ async function getCoinDeskPrice() {
 
 async function getCoinLoreStats() {
   if (statsCache && (Date.now() - statsFetchTs) < STATS_TTL) return statsCache;
-  const res = await fetch(COINLORE_TICK);
-  if (!res.ok) throw new Error(`CoinLore ticker ${res.status}`);
+  const res = await fetch(`${SUPABASE_URL}?type=stats`);
+  if (!res.ok) throw new Error(`Stats ${res.status}`);
   const j = await res.json();
   statsCache = j[0];
   statsFetchTs = Date.now();
@@ -544,11 +547,10 @@ async function getCoinLoreStats() {
 }
 
 async function getCoinLoreOHLCV() {
-  // Full history — cache for 5 min, it's a large payload
   if (ohlcvCache && (Date.now() - ohlcvFetchTs) < STATS_TTL) return ohlcvCache;
-  const res = await fetch(COINLORE_OHLC);
-  if (!res.ok) throw new Error(`CoinLore OHLCV ${res.status}`);
-  ohlcvCache = await res.json(); // [[ts,o,h,l,c,v], ...]
+  const res = await fetch(`${SUPABASE_URL}?type=chart`);
+  if (!res.ok) throw new Error(`Chart ${res.status}`);
+  ohlcvCache = await res.json();
   ohlcvFetchTs = Date.now();
   return ohlcvCache;
 }
@@ -862,34 +864,34 @@ tickHalving();
 setInterval(tickHalving, 1000);
 
 // ─── NEWS ─────────────────────────────────────────────────
-// cryptocurrency.cv — free, JSON, open CORS, no proxy needed ✅
-const NEWS_URL      = 'https://cryptocurrency.cv/api/news?coin=bitcoin&limit=8';
-const NEWS_REFRESH  = 10 * 60 * 1000; // 10 minutes
-let newsTimer       = null;
-let lastNewsTs      = 0;
+// rss2json.com converts Google News RSS → JSON with open CORS
+// Free tier: 10,000 requests/month — plenty for 10min refresh
+const GOOGLE_NEWS_RSS = 'https://news.google.com/rss/search?q=bitcoin&hl=en-US&gl=US&ceid=US:en';
+const NEWS_URL        = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(GOOGLE_NEWS_RSS)}`;
+const NEWS_REFRESH    = 10 * 60 * 1000; // 10 minutes
+let newsTimer         = null;
+let lastNewsTs        = 0;
 
 function timeAgo(dateStr) {
   const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
-  if (diff < 60)   return diff + 's ago';
-  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
-  if (diff < 86400)return Math.floor(diff/3600) + 'h ago';
+  if (diff < 60)    return diff + 's ago';
+  if (diff < 3600)  return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
   return Math.floor(diff/86400) + 'd ago';
 }
 
 async function fetchNews() {
-  // Direct fetch — no proxy, works on any network ✅
   const res = await fetch(NEWS_URL);
-  if (!res.ok) throw new Error(`News HTTP ${res.status}`);
+  if (!res.ok) throw new Error(`rss2json ${res.status}`);
   const j = await res.json();
+  if (j.status !== 'ok') throw new Error('rss2json error: ' + j.message);
 
-  // cryptocurrency.cv returns { articles: [...] } or array directly
-  const items = Array.isArray(j) ? j : (j.articles || j.data || j.news || []);
-
-  return items.slice(0, 8).map(item => ({
-    title:   item.title   || item.headline || '',
-    link:    item.url     || item.link     || '#',
-    source:  item.source  || item.publisher || item.domain || 'Crypto News',
-    pubDate: item.published_at || item.date || item.publishedAt || '',
+  // rss2json returns { status, feed, items: [...] }
+  return j.items.slice(0, 8).map(item => ({
+    title:   item.title   || '',
+    link:    item.link    || '#',
+    source:  item.author  || new URL(item.link).hostname.replace('www.','') || 'News',
+    pubDate: item.pubDate || '',
   }));
 }
 
