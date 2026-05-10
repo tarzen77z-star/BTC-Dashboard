@@ -465,8 +465,8 @@ body::before{content:'';position:fixed;inset:0;
 
   <div class="badges">
     <span class="badge">PRICE · COINBASE</span>
-    <span class="badge">STATS · COINLORE (DIRECT TEST)</span>
-    <span class="badge">CHART · COINLORE OHLCV</span>
+    <span class="badge">STATS · COINLORE</span>
+    <span class="badge">CHART · COINBASE CANDLES</span>
     <span class="badge">FNG · ALTERNATIVE.ME</span>
     <span class="badge">NEWS · GOOGLE NEWS + RSS2JSON</span>
   </div>
@@ -474,8 +474,8 @@ body::before{content:'';position:fixed;inset:0;
   <button class="refresh-btn" id="refreshBtn" onclick="refreshAll()">↻ &nbsp;REFRESH DATA</button>
 
   <div class="footer">
-    Price via <a href="https://coinbase.com" target="_blank">Coinbase</a> ·
-    Stats &amp; Chart via <a href="https://coinlore.com" target="_blank">CoinLore</a> + <a href="https://supabase.com" target="_blank">Supabase</a><br>
+    Price &amp; Chart via <a href="https://coinbase.com" target="_blank">Coinbase</a> ·
+    Stats via <a href="https://coinlore.com" target="_blank">CoinLore</a><br>
     Sentiment via <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank">Alternative.me</a> ·
     News via <a href="https://news.google.com" target="_blank">Google News</a> + <a href="https://rss2json.com" target="_blank">rss2json</a><br>
     No API key · No proxy · Works everywhere<br><br>
@@ -487,11 +487,12 @@ body::before{content:'';position:fixed;inset:0;
 <script>
 // ─────────────────────────────────────────────────────────
 //  CONFIG
-//  Coinbase v2     → live price       (open CORS ✅)
-//  CoinLore        → stats + chart    (testing direct CORS)
-//  Alternative.me  → Fear & Greed     (open CORS ✅)
-//  rss2json        → news             (open CORS ✅)
-//  Halving         → local math       (no API)
+//  Coinbase v2        → live price       (open CORS ✅)
+//  Coinbase candles   → chart            (open CORS ✅)
+//  CoinLore           → stats only       (24h%, 7d%, mkt cap, vol)
+//  Alternative.me     → Fear & Greed     (open CORS ✅)
+//  rss2json           → news             (open CORS ✅)
+//  Halving            → local math       (no API)
 // ─────────────────────────────────────────────────────────
 const COINBASE_URL  = 'https://api.coinbase.com/v2/prices/BTC-USD/spot';
 const FNG_URL       = 'https://api.alternative.me/fng/?limit=1';
@@ -829,7 +830,7 @@ async function refreshAll() {
     else { $('priceUpdated').textContent = '⚠ Price unavailable'; anyError = true; }
   }
 
-  // 2. CoinLore stats via Supabase — independent
+  // 2. CoinLore stats — 24h%, 7d%, market cap, volume
   try {
     const coin = await getCoinLoreStats();
     renderStats(coin);
