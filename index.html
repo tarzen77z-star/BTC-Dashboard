@@ -53,15 +53,6 @@ body::before{content:'';position:fixed;inset:0;
 .down{color:var(--red);  background:rgba(255,69,69,0.08); border:1px solid rgba(255,69,69,0.22)}
 .neu {color:var(--muted);background:var(--surface2);      border:1px solid var(--border)}
 .price-updated{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:10px}
-.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 20px;margin-bottom:14px}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
-  padding:15px;position:relative;overflow:hidden;animation:fadeUp .4s ease both}
-.stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,var(--gold),transparent);opacity:0.45}
-@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.stat-label{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:7px}
-.stat-value{font-family:var(--mono);font-size:14px;color:var(--text);transition:color .3s}
-.stat-value.loading{color:var(--border)}
 .error-box{background:rgba(255,69,69,0.07);border:1px solid rgba(255,69,69,0.25);
   border-radius:var(--radius);padding:13px 16px;margin:0 20px 14px;
   font-family:var(--mono);font-size:11px;color:var(--red);text-align:center;display:none;line-height:1.7}
@@ -70,22 +61,6 @@ body::before{content:'';position:fixed;inset:0;
   color:var(--muted);text-transform:uppercase;margin-bottom:10px;
   display:flex;align-items:center;gap:8px}
 .section-title::after{content:'';flex:1;height:1px;background:var(--border)}
-.time-tabs{display:flex;gap:6px;margin-bottom:10px}
-.time-tab{font-family:var(--mono);font-size:11px;padding:5px 13px;border-radius:6px;
-  border:1px solid var(--border);background:transparent;color:var(--muted);
-  cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
-.time-tab.active{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
-.time-tab:active{transform:scale(0.95)}
-.chart-wrap{background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius);padding:14px;height:170px;position:relative;overflow:hidden}
-.chart-msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  font-family:var(--mono);font-size:11px;color:var(--muted)}
-#priceChart{display:none;width:100%!important;height:100%!important}
-.info-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
-.info-row{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border)}
-.info-row:last-child{border-bottom:none}
-.info-key{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
-.info-val{font-family:var(--mono);font-size:12px;color:var(--text)}
 .fg-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
 .fg-top{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px}
 .fg-score{font-family:var(--display);font-size:52px;line-height:1;transition:color .4s}
@@ -111,6 +86,39 @@ body::before{content:'';position:fixed;inset:0;
 .footer a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--border)}
 @keyframes flash{0%,100%{opacity:1}40%{opacity:0.2}}
 .flashing{animation:flash .45s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── STATS ────────────────────────────────────────────── */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 20px;margin-bottom:14px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:15px;position:relative;overflow:hidden;animation:fadeUp .4s ease both}
+.stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--gold),transparent);opacity:0.45}
+.stat-label{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1.5px;
+  text-transform:uppercase;margin-bottom:7px}
+.stat-value{font-family:var(--mono);font-size:14px;color:var(--text)}
+.stat-value.loading{color:var(--border)}
+
+/* ── CHART ────────────────────────────────────────────── */
+.time-tabs{display:flex;gap:6px;margin-bottom:10px}
+.time-tab{font-family:var(--mono);font-size:11px;padding:5px 13px;border-radius:6px;
+  border:1px solid var(--border);background:transparent;color:var(--muted);
+  cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.time-tab.active{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
+.time-tab:active{transform:scale(0.95)}
+.chart-wrap{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px;height:170px;position:relative;overflow:hidden}
+.chart-msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:11px;color:var(--muted)}
+#priceChart{display:none;width:100%!important;height:100%!important}
+
+/* ── MARKET INFO ──────────────────────────────────────── */
+.info-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.info-row{display:flex;justify-content:space-between;align-items:center;
+  padding:13px 16px;border-bottom:1px solid var(--border)}
+.info-row:last-child{border-bottom:none}
+.info-key{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.info-val{font-family:var(--mono);font-size:12px;color:var(--text)}
 
 /* ── HALVING ──────────────────────────────────────────── */
 .halving-card{background:var(--surface);border:1px solid var(--border);
@@ -233,7 +241,10 @@ body::before{content:'';position:fixed;inset:0;
   <header class="header">
     <div class="logo">
       <div class="btc-icon">₿</div>
-      <span class="logo-text">BTC LIVE</span>
+      <div>
+        <span class="logo-text">BTC LIVE</span>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:1px">BY SBB</div>
+      </div>
     </div>
     <div class="live-badge"><div class="live-dot"></div>LIVE</div>
   </header>
@@ -247,14 +258,17 @@ body::before{content:'';position:fixed;inset:0;
     <div class="price-updated" id="priceUpdated">Connecting…</div>
   </div>
 
+  <div class="error-box" id="errorBox"></div>
+
+  <!-- STATS -->
   <div class="stats-grid">
     <div class="stat-card" style="animation-delay:.05s">
-      <div class="stat-label">24H HIGH</div>
-      <div class="stat-value loading" id="s-high">——</div>
+      <div class="stat-label">24H CHANGE</div>
+      <div class="stat-value loading" id="s-chg">——</div>
     </div>
     <div class="stat-card" style="animation-delay:.10s">
-      <div class="stat-label">24H LOW</div>
-      <div class="stat-value loading" id="s-low">——</div>
+      <div class="stat-label">7D CHANGE</div>
+      <div class="stat-value loading" id="s-7d">——</div>
     </div>
     <div class="stat-card" style="animation-delay:.15s">
       <div class="stat-label">MKT CAP</div>
@@ -266,15 +280,17 @@ body::before{content:'';position:fixed;inset:0;
     </div>
   </div>
 
-  <div class="error-box" id="errorBox"></div>
-
+  <!-- CHART -->
   <div class="section">
     <div class="section-title">Price Chart</div>
     <div class="time-tabs">
-      <button class="time-tab active" data-days="1"  onclick="switchTab(this)">1D</button>
-      <button class="time-tab"        data-days="7"  onclick="switchTab(this)">7D</button>
-      <button class="time-tab"        data-days="30" onclick="switchTab(this)">30D</button>
-      <button class="time-tab"        data-days="90" onclick="switchTab(this)">90D</button>
+      <button class="time-tab active" data-limit="14" onclick="switchTab(this)">14D</button>
+      <button class="time-tab" data-limit="30" onclick="switchTab(this)">30D</button>
+      <button class="time-tab" data-limit="90" onclick="switchTab(this)">90D</button>
+      <button class="time-tab" data-limit="120" onclick="switchTab(this)">120D</button>
+      <button class="time-tab" data-limit="365" onclick="switchTab(this)">1Y</button>
+      <button class="time-tab" data-limit="1095" onclick="switchTab(this)">3Y</button>
+      <button class="time-tab" data-limit="9999" onclick="switchTab(this)">ALL</button>
     </div>
     <div class="chart-wrap">
       <div class="chart-msg" id="chartMsg">Loading chart…</div>
@@ -282,6 +298,7 @@ body::before{content:'';position:fixed;inset:0;
     </div>
   </div>
 
+  <!-- MARKET INFO -->
   <div class="section">
     <div class="section-title">Market Info</div>
     <div class="info-card">
@@ -296,10 +313,6 @@ body::before{content:'';position:fixed;inset:0;
       <div class="info-row">
         <span class="info-key">Supply Mined</span>
         <span class="info-val" id="i-pct">—</span>
-      </div>
-      <div class="info-row">
-        <span class="info-key">All-Time High</span>
-        <span class="info-val" id="i-ath">—</span>
       </div>
       <div class="info-row">
         <span class="info-key">Rank</span>
@@ -456,83 +469,88 @@ body::before{content:'';position:fixed;inset:0;
   </div>
 
   <div class="badges">
-    <span class="badge">DATA · COINGECKO</span>
-    <span class="badge">PROXY · CORSPROXY.IO</span>
+    <span class="badge">PRICE · COINDESK</span>
+    <span class="badge">STATS · COINLORE</span>
+    <span class="badge">CHART · COINLORE OHLCV</span>
     <span class="badge">FNG · ALTERNATIVE.ME</span>
-    <span class="badge">NEWS · GOOGLE NEWS RSS</span>
-    <span class="badge">HALVING · LOCAL CALC</span>
+    <span class="badge">NEWS · CRYPTOCURRENCY.CV</span>
+    <span class="badge">ZERO PROXIES ✅</span>
   </div>
 
   <button class="refresh-btn" id="refreshBtn" onclick="refreshAll()">↻ &nbsp;REFRESH DATA</button>
 
   <div class="footer">
-    Prices via <a href="https://coingecko.com" target="_blank">CoinGecko</a> ·
-    CORS via <a href="https://corsproxy.io" target="_blank">corsproxy.io</a> ·
-    Sentiment via <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank">Alternative.me</a><br>
-    News via <a href="https://news.google.com" target="_blank">Google News RSS</a> ·
-    Auto-refreshes every 90s · News every 10min · No API key required
+    Price via <a href="https://coindesk.com" target="_blank">CoinDesk</a> ·
+    Stats &amp; Chart via <a href="https://coinlore.com" target="_blank">CoinLore</a><br>
+    Sentiment via <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank">Alternative.me</a> ·
+    News via <a href="https://cryptocurrency.cv" target="_blank">cryptocurrency.cv</a><br>
+    No API key · No proxy · Works everywhere<br><br>
+    <span style="color:var(--gold);letter-spacing:2px">BTC LIVE · BUILT BY SBB</span>
   </div>
 
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
 // ─────────────────────────────────────────────────────────
-//  CONFIG
+//  CONFIG — 100% proxy-free ✅
+//  CoinDesk        → live price  (no proxy)
+//  CoinLore        → stats + chart (no proxy, open CORS)
+//  Alternative.me  → Fear & Greed (no proxy)
+//  cryptocurrency.cv → news       (no proxy)
+//  Halving          → local math  (no API)
 // ─────────────────────────────────────────────────────────
-const PROXY      = 'https://corsproxy.io/?url=';
-const GECKO_BASE = 'https://api.coingecko.com/api/v3';
-const FNG_URL    = 'https://api.alternative.me/fng/?limit=1';
-const REFRESH_MS = 90_000; // 90s — gentler on rate limits
+const COINDESK_URL  = 'https://api.coindesk.com/v1/bpi/currentprice/USD.json';
+const COINLORE_TICK = 'https://api.coinlore.net/api/ticker/?id=90';
+const COINLORE_OHLC = 'https://api.coinlore.net/api/coin/ohlcv/?coin=90';
+const FNG_URL       = 'https://api.alternative.me/fng/?limit=1';
+const REFRESH_MS    = 60_000;
+const STATS_TTL     = 5 * 60 * 1000; // re-fetch stats every 5 min
 
-let chartInst  = null;
-let activeTab  = document.querySelector('.time-tab.active');
-let refreshTimer = null;
-
-// Cache: avoid re-fetching chart data the user already loaded
-const chartCache = {}; // { '1': {data, ts}, '7': ... }
-const CACHE_TTL  = 5 * 60 * 1000; // 5 minutes
+let chartInst     = null;
+let activeLimit   = 14;
+let ohlcvCache    = null; // full OHLCV array cached after first fetch
+let ohlcvFetchTs  = 0;
+let statsCache    = null;
+let statsFetchTs  = 0;
+let refreshTimer  = null;
 
 const $        = id => document.getElementById(id);
 const fUSD     = (n,d=2) => '$'+parseFloat(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
 const fCompact = n => { n=parseFloat(n); if(n>=1e12)return'$'+(n/1e12).toFixed(2)+'T'; if(n>=1e9)return'$'+(n/1e9).toFixed(2)+'B'; if(n>=1e6)return'$'+(n/1e6).toFixed(2)+'M'; return fUSD(n,0); };
 const nowStr   = () => new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-const setVal   = (id,v) => { const e=$(id); e.textContent=v; e.classList.remove('loading'); };
 const fgCol    = v => v<=25?'var(--red)':v<=45?'#ffaa00':v<=55?'var(--text)':v<=75?'#66dd88':'var(--green)';
+const setVal   = (id,v) => { const e=$(id); e.textContent=v; e.classList.remove('loading'); };
 const sleep    = ms => new Promise(r => setTimeout(r, ms));
 
-// ─── FETCH with retry ────────────────────────────────────
-// Waits between calls so CoinGecko doesn't rate-limit us
-async function pfetch(path, attempt=1) {
-  const url = GECKO_BASE + path;
-  try {
-    const res = await fetch(PROXY + encodeURIComponent(url));
-    if (res.status === 429) {
-      if (attempt <= 4) {
-        await sleep(attempt * 3000); // 3s, 6s, 9s, 12s
-        return pfetch(path, attempt + 1);
-      }
-      throw new Error('rate-limited');
-    }
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
-  } catch(e) {
-    if (attempt <= 2 && !e.message.includes('rate-limited')) {
-      await sleep(2000);
-      return pfetch(path, attempt + 1);
-    }
-    throw e;
-  }
+// ─── STALE STORE ──────────────────────────────────────────
+const stale = { price: null, fg: null };
+
+// ─── FETCH ────────────────────────────────────────────────
+async function getCoinDeskPrice() {
+  const res = await fetch(COINDESK_URL);
+  if (!res.ok) throw new Error(`CoinDesk ${res.status}`);
+  const j = await res.json();
+  return { price: j.bpi.USD.rate_float };
 }
 
-async function getCoin() {
-  return pfetch('/coins/bitcoin?localization=false&tickers=false&community_data=false&developer_data=false&sparkline=false');
+async function getCoinLoreStats() {
+  if (statsCache && (Date.now() - statsFetchTs) < STATS_TTL) return statsCache;
+  const res = await fetch(COINLORE_TICK);
+  if (!res.ok) throw new Error(`CoinLore ticker ${res.status}`);
+  const j = await res.json();
+  statsCache = j[0];
+  statsFetchTs = Date.now();
+  return statsCache;
 }
 
-async function getHistory(days) {
-  const cached = chartCache[days];
-  if (cached && (Date.now() - cached.ts) < CACHE_TTL) return cached.data;
-  const data = await pfetch(`/coins/bitcoin/market_chart?vs_currency=usd&days=${days}`);
-  chartCache[days] = { data, ts: Date.now() };
-  return data;
+async function getCoinLoreOHLCV() {
+  // Full history — cache for 5 min, it's a large payload
+  if (ohlcvCache && (Date.now() - ohlcvFetchTs) < STATS_TTL) return ohlcvCache;
+  const res = await fetch(COINLORE_OHLC);
+  if (!res.ok) throw new Error(`CoinLore OHLCV ${res.status}`);
+  ohlcvCache = await res.json(); // [[ts,o,h,l,c,v], ...]
+  ohlcvFetchTs = Date.now();
+  return ohlcvCache;
 }
 
 async function getFG() {
@@ -543,63 +561,64 @@ async function getFG() {
   } catch { return null; }
 }
 
-// ─── STALE DATA STORE ────────────────────────────────────
-// Keeps last successful data so we always show something
-const stale = { coin: null, fg: null };
-
-function showStale() {
-  if (stale.coin) {
-    renderPrice(stale.coin, true); // true = mark as stale
-    renderStats(stale.coin);
-  }
-  if (stale.fg) renderFG(stale.fg);
-  // Show stale chart from cache if available
-  const days = parseInt(activeTab.dataset.days);
-  const cached = chartCache[days];
-  if (cached) renderChart(cached.data, days);
-}
-
-// ─── RENDER ──────────────────────────────────────────────
-function renderPrice(md, isStale=false) {
-  const price = md.current_price.usd;
-  const chg   = md.price_change_percentage_24h;
-  const el    = $('priceMain');
-  el.textContent = fUSD(price, 2);
+// ─── RENDER PRICE ─────────────────────────────────────────
+function renderPrice(priceData, isStale=false) {
+  const el = $('priceMain');
+  el.textContent = fUSD(priceData.price, 2);
   el.classList.add('live');
   if (!isStale) {
     el.classList.add('flashing');
     setTimeout(() => el.classList.remove('flashing'), 500);
   }
-  const badge = $('priceChange');
-  badge.textContent = (chg >= 0 ? '▲ ' : '▼ ') + Math.abs(chg).toFixed(2) + '%';
-  badge.className   = 'price-change ' + (chg > 0 ? 'up' : chg < 0 ? 'down' : 'neu');
   $('priceUpdated').textContent = isStale
-    ? `⚠ Stale data · retrying…`
-    : `CoinGecko · ${nowStr()}`;
+    ? '⚠ Stale data · retrying…'
+    : `CoinDesk · ${nowStr()}`;
 }
 
-function renderStats(md) {
-  setVal('s-high', fUSD(md.high_24h.usd, 0));
-  setVal('s-low',  fUSD(md.low_24h.usd,  0));
-  setVal('s-cap',  fCompact(md.market_cap.usd));
-  setVal('s-vol',  fCompact(md.total_volume.usd));
-  const sup = md.circulating_supply;
-  setVal('i-supply', sup.toLocaleString('en-US', {maximumFractionDigits:0}) + ' BTC');
-  setVal('i-pct',    ((sup / 21_000_000) * 100).toFixed(2) + '% mined');
-  setVal('i-ath',    fUSD(md.ath.usd, 0));
+// ─── RENDER STATS ─────────────────────────────────────────
+function renderStats(coin) {
+  const chg24 = parseFloat(coin.percent_change_24h);
+  const chg7d = parseFloat(coin.percent_change_7d);
+  const arrow = v => v >= 0 ? '▲' : '▼';
+  const cls   = v => v >= 0 ? 'color:var(--green)' : 'color:var(--red)';
+
+  // 24h change
+  const chgEl = $('s-chg');
+  chgEl.innerHTML = `<span style="${cls(chg24)}">${arrow(chg24)} ${Math.abs(chg24).toFixed(2)}%</span>`;
+  chgEl.classList.remove('loading');
+
+  // 7d change
+  const chg7El = $('s-7d');
+  chg7El.innerHTML = `<span style="${cls(chg7d)}">${arrow(chg7d)} ${Math.abs(chg7d).toFixed(2)}%</span>`;
+  chg7El.classList.remove('loading');
+
+  setVal('s-cap', fCompact(parseFloat(coin.market_cap_usd)));
+  setVal('s-vol', fCompact(parseFloat(coin.volume24)));
+
+  const supply = parseFloat(coin.csupply);
+  setVal('i-supply', supply.toLocaleString('en-US', {maximumFractionDigits:0}) + ' BTC');
+  setVal('i-pct', ((supply / 21_000_000) * 100).toFixed(2) + '% mined');
+
+  // Also update 24h badge on price hero
+  const badge = $('priceChange');
+  badge.textContent = `${arrow(chg24)} ${Math.abs(chg24).toFixed(2)}%`;
+  badge.className = 'price-change ' + (chg24 > 0 ? 'up' : chg24 < 0 ? 'down' : 'neu');
 }
 
-function renderChart(data, days) {
-  const vals   = data.prices.map(p => p[1]);
-  const labels = data.prices.map(p => {
-    const d = new Date(p[0]);
-    return days <= 1
-      ? d.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'})
-      : d.toLocaleDateString('en-US', {month:'short', day:'numeric'});
+// ─── RENDER CHART ─────────────────────────────────────────
+// OHLCV format: [timestamp, open, high, low, close, volume]
+function renderChart(ohlcv, limit) {
+  const slice  = limit >= 9999 ? ohlcv : ohlcv.slice(-limit);
+  const vals   = slice.map(c => c[4]); // close price
+  const labels = slice.map(c => {
+    const d = new Date(c[0] * 1000);
+    if (limit >= 1095) return d.toLocaleDateString('en-US', {year:'numeric', month:'short'});
+    return d.toLocaleDateString('en-US', {month:'short', day:'numeric'});
   });
-  const isUp   = vals[vals.length-1] >= vals[0];
-  const color  = isUp ? '#00e676' : '#ff4545';
-  const step   = Math.max(1, Math.floor(labels.length / 6));
+
+  const isUp  = vals[vals.length-1] >= vals[0];
+  const color = isUp ? '#00e676' : '#ff4545';
+  const step  = Math.max(1, Math.floor(slice.length / 7));
   const sparse = labels.map((l,i) => i % step === 0 ? l : '');
 
   $('chartMsg').style.display = 'none';
@@ -624,7 +643,7 @@ function renderChart(data, days) {
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      animation: {duration:700, easing:'easeInOutQuart'},
+      animation: {duration:600, easing:'easeInOutQuart'},
       interaction: {mode:'index', intersect:false},
       plugins: {
         legend: {display:false},
@@ -644,6 +663,25 @@ function renderChart(data, days) {
   });
 }
 
+// ─── TAB SWITCH ───────────────────────────────────────────
+async function switchTab(btn) {
+  activeLimit = parseInt(btn.dataset.limit);
+  document.querySelectorAll('.time-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  if (ohlcvCache) {
+    renderChart(ohlcvCache, activeLimit);
+  } else {
+    $('chartMsg').textContent = 'Loading…';
+    $('chartMsg').style.display = 'flex';
+    $('priceChart').style.display = 'none';
+    try {
+      const ohlcv = await getCoinLoreOHLCV();
+      renderChart(ohlcv, activeLimit);
+    } catch { $('chartMsg').textContent = '⚠ Chart unavailable'; }
+  }
+}
+
+// ─── RENDER FEAR & GREED ──────────────────────────────────
 function renderFG(fg) {
   if (!fg) { $('fgMood').textContent = 'Unavailable'; return; }
   const val = parseInt(fg.value);
@@ -656,80 +694,62 @@ function renderFG(fg) {
 }
 
 // ─── BUY SIGNAL ───────────────────────────────────────────
-// Scores 3 factors, each -1 (bad) / 0 (neutral) / +1 (good)
-// Total: +2 to +3 = Favorable, -1 to +1 = Neutral, -2 to -3 = Caution
-function renderSignal(md, fg) {
-  if (!md) return;
+// Only uses Fear & Greed now (no CoinGecko dependency)
+function renderSignal(fg) {
+  const fgVal = fg ? parseInt(fg.value) : null;
+  if (fgVal === null) return;
 
-  const price    = md.current_price.usd;
-  const ath      = md.ath.usd;
-  const chg24    = md.price_change_percentage_24h;
-  const fgVal    = fg ? parseInt(fg.value) : 50;
-  const pctFromATH = ((ath - price) / ath) * 100;
-
-  // ── Factor 1: Fear & Greed
-  let fgScore = 0, fgLabel = '', fgClass = 'mid';
-  if (fgVal <= 30)      { fgScore = +1; fgLabel = `${fgVal} — Fearful (buy opportunity)`; fgClass='good'; }
-  else if (fgVal <= 55) { fgScore =  0; fgLabel = `${fgVal} — Neutral`;                   fgClass='mid';  }
-  else                  { fgScore = -1; fgLabel = `${fgVal} — Greedy (be cautious)`;       fgClass='bad';  }
-
-  // ── Factor 2: 24H price change
-  let chgScore = 0, chgLabel = '', chgClass = 'mid';
-  if (chg24 <= -5)       { chgScore = +1; chgLabel = `${chg24.toFixed(1)}% (significant dip)`; chgClass='good'; }
-  else if (chg24 <= 2)   { chgScore =  0; chgLabel = `${chg24.toFixed(1)}% (stable)`;          chgClass='mid';  }
-  else                   { chgScore = -1; chgLabel = `+${chg24.toFixed(1)}% (recent run-up)`;   chgClass='bad';  }
-
-  // ── Factor 3: Distance from ATH
-  let athScore = 0, athLabel = '', athClass = 'mid';
-  if (pctFromATH >= 40)      { athScore = +1; athLabel = `${pctFromATH.toFixed(0)}% below ATH (historically cheap)`;  athClass='good'; }
-  else if (pctFromATH >= 15) { athScore =  0; athLabel = `${pctFromATH.toFixed(0)}% below ATH (mid-range)`;           athClass='mid';  }
-  else                       { athScore = -1; athLabel = `${pctFromATH.toFixed(0)}% below ATH (near all-time high)`;   athClass='bad';  }
-
-  // ── Total score
-  const total = fgScore + chgScore + athScore;
   let verdict, desc, mood, emoji;
-
-  if (total >= 2) {
+  if (fgVal <= 25) {
     verdict = 'HISTORICALLY FAVORABLE';
-    desc    = 'Multiple indicators suggest this could be a reasonable entry point. Price is down, sentiment is fearful, and BTC is well off its highs — conditions that have historically preceded recoveries.';
+    desc    = 'Extreme fear in the market. Historically, periods of extreme fear have often preceded price recoveries. Many experienced investors view this as a potential buying opportunity.';
     mood    = 'favorable'; emoji = '✅';
-  } else if (total <= -2) {
-    verdict = 'PROCEED WITH CAUTION';
-    desc    = 'Multiple indicators suggest elevated risk right now. Price is near its all-time high and sentiment is greedy — historically not the best time to buy. Consider waiting for a pullback.';
+  } else if (fgVal <= 45) {
+    verdict = 'MILD FEAR — WATCH CLOSELY';
+    desc    = 'The market is leaning fearful. Sentiment is cautious but not extreme. Dollar-cost averaging (buying small fixed amounts regularly) is a common strategy in these conditions.';
+    mood    = 'neutral'; emoji = '⚠️';
+  } else if (fgVal <= 60) {
+    verdict = 'NEUTRAL — NO STRONG SIGNAL';
+    desc    = 'Sentiment is balanced. No strong historical signal either way. Consider your own investment timeline and risk tolerance before making a decision.';
+    mood    = 'neutral'; emoji = '⚠️';
+  } else if (fgVal <= 80) {
+    verdict = 'GREED — PROCEED WITH CAUTION';
+    desc    = 'The market is feeling greedy. Historically, elevated greed has sometimes preceded corrections. This doesn\'t mean a drop is certain, but caution is warranted.';
     mood    = 'caution'; emoji = '🔴';
   } else {
-    verdict = 'NEUTRAL — NO STRONG SIGNAL';
-    desc    = 'Conditions are mixed. There\'s no strong historical case for or against buying right now. Dollar-cost averaging (buying a fixed amount regularly) is a common strategy in uncertain conditions.';
-    mood    = 'neutral'; emoji = '⚠️';
+    verdict = 'EXTREME GREED — HIGH CAUTION';
+    desc    = 'Extreme greed in the market. Historically one of the riskier times to buy. Many experienced investors reduce exposure or wait during periods of extreme greed.';
+    mood    = 'caution'; emoji = '🔴';
   }
 
-  // Render
   const icon = $('signalIcon');
   icon.textContent = emoji;
   icon.className   = `signal-icon ${mood}`;
-
   const verd = $('signalVerdict');
   verd.textContent = verdict;
   verd.className   = `signal-verdict ${mood}`;
-
   $('signalDesc').textContent = desc;
 
-  $('sf-fg').textContent    = fgLabel;   $('sf-fg').className    = `sf-val ${fgClass}`;
-  $('sf-chg').textContent   = chgLabel;  $('sf-chg').className   = `sf-val ${chgClass}`;
-  $('sf-ath').textContent   = athLabel;  $('sf-ath').className   = `sf-val ${athClass}`;
+  // Update the Fear & Greed factor row
+  $('sf-fg').textContent = `${fgVal} — ${fg.value_classification}`;
+  $('sf-fg').className   = fgVal <= 45 ? 'sf-val good' : fgVal <= 60 ? 'sf-val mid' : 'sf-val bad';
 
-  const scoreText = total > 0 ? `+${total} / 3 Positive` : total < 0 ? `${total} / 3 Negative` : '0 / 3 Neutral';
-  const scoreClass = total >= 2 ? 'good' : total <= -2 ? 'bad' : 'mid';
-  $('sf-score').textContent = scoreText;
+  // Hide CoinGecko-dependent rows
+  $('sf-chg').textContent = 'Requires stats (coming soon)';
+  $('sf-chg').className   = 'sf-val mid';
+  $('sf-ath').textContent = 'Requires stats (coming soon)';
+  $('sf-ath').className   = 'sf-val mid';
+
+  const scoreClass = mood === 'favorable' ? 'good' : mood === 'caution' ? 'bad' : 'mid';
+  $('sf-score').textContent = mood === 'favorable' ? 'Positive' : mood === 'caution' ? 'Negative' : 'Neutral';
   $('sf-score').className   = `sf-val ${scoreClass}`;
 }
 
 // ─── P&L CALCULATOR ───────────────────────────────────────
-// Uses live price from stale store — zero API calls
 function calcPL() {
   const invested  = parseFloat($('calcInvested').value);
   const buyPrice  = parseFloat($('calcBuyPrice').value);
-  const livePrice = stale.coin ? stale.coin.current_price.usd : null;
+  const livePrice = stale.price ? stale.price.price : null;
 
   if (!invested || !buyPrice || buyPrice <= 0 || !livePrice) {
     $('cr-btc').textContent = '—'; $('cr-btc').className = 'calc-result-val neu';
@@ -747,101 +767,50 @@ function calcPL() {
 
   $('cr-btc').textContent = btcHeld.toFixed(6) + ' BTC';
   $('cr-btc').className   = 'calc-result-val neu';
-
   $('cr-val').textContent = fUSD(currentVal, 2);
   $('cr-val').className   = `calc-result-val ${plClass}`;
-
   $('cr-pl').textContent  = `${plSign}${fUSD(pl, 2)} (${plSign}${plPct.toFixed(2)}%)`;
   $('cr-pl').className    = `calc-result-val ${plClass}`;
 }
 
-// ─── TAB SWITCH ───────────────────────────────────────────
-async function switchTab(btn) {
-  if (btn === activeTab) return;
-  document.querySelectorAll('.time-tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
-  activeTab = btn;
-
-  const days = parseInt(btn.dataset.days);
-
-  // Always show cached data instantly if available (even stale)
-  const cached = chartCache[days];
-  if (cached) {
-    renderChart(cached.data, days);
-    // If fresh enough, done
-    if ((Date.now() - cached.ts) < CACHE_TTL) return;
-    // Otherwise silently refresh in background
-  } else {
-    $('chartMsg').textContent = 'Loading chart…';
-    $('chartMsg').style.display = 'flex';
-    $('priceChart').style.display = 'none';
-  }
-
-  try {
-    await sleep(800);
-    const data = await getHistory(days);
-    renderChart(data, days);
-  } catch(e) {
-    console.error(e);
-    // If we showed stale data above, leave it — just log
-    if (!cached) {
-      $('chartMsg').textContent = '⚠ Rate limited — wait 60s and tap again';
-      $('chartMsg').style.display = 'flex';
-    }
-  }
-}
-
 // ─── MAIN REFRESH ─────────────────────────────────────────
-// isFirstLoad = true means use longer delays to avoid burst
-async function refreshAll(isFirstLoad=false) {
+async function refreshAll() {
   const btn = $('refreshBtn');
   btn.disabled = true;
   btn.textContent = '↻  REFRESHING…';
   $('errorBox').style.display = 'none';
 
-  // On first load, show stale data immediately while we fetch
-  if (isFirstLoad && stale.coin) showStale();
-
   try {
-    // Longer initial delay on first load to avoid bursting CoinGecko
-    if (isFirstLoad) await sleep(1000);
+    // 1. CoinDesk price — always fresh
+    const cd = await getCoinDeskPrice();
+    stale.price = cd;
+    renderPrice(cd);
 
-    // Step 1: coin price data
-    const coin = await getCoin();
-    stale.coin = coin.market_data; // save for stale fallback
-    renderPrice(coin.market_data);
-    renderStats(coin.market_data);
+    // 2. CoinLore stats — cached 5 min
+    await sleep(300);
+    const coin = await getCoinLoreStats();
+    renderStats(coin);
 
-    // Step 2: Fear & Greed — different server, safe to fetch right away
+    // 3. CoinLore OHLCV chart — cached 5 min, large payload
+    await sleep(300);
+    const ohlcv = await getCoinLoreOHLCV();
+    renderChart(ohlcv, activeLimit);
+
+    // 4. Fear & Greed
     const fg = await getFG();
     if (fg) stale.fg = fg;
     renderFG(fg || stale.fg);
-    renderSignal(coin.market_data, fg || stale.fg);
-
-    // Step 3: longer stagger before chart on first load
-    await sleep(isFirstLoad ? 3000 : 1000);
-    const days = parseInt(activeTab.dataset.days);
-    if (days === 1) delete chartCache[1]; // always refresh 1D
-    const hist = await getHistory(days);
-    renderChart(hist, days);
+    renderSignal(fg || stale.fg);
 
   } catch(err) {
     console.error(err);
-
-    // Show stale data instead of blank error if we have it
-    if (stale.coin) {
-      showStale();
-      // Small non-intrusive warning instead of big red box
-      $('priceUpdated').textContent = '⚠ Stale data · retrying in 90s';
+    if (stale.price) {
+      renderPrice(stale.price, true);
     } else {
-      // First ever load with no stale data — show the error box
       $('errorBox').style.display = 'block';
-      $('errorBox').innerHTML = '⚠ CoinGecko rate-limit hit on first load.<br>Retrying automatically — please wait…';
+      $('errorBox').innerHTML = '⚠ Could not load data. Check your connection.';
     }
-
-    // Silent background retry after 30s
-    setTimeout(() => refreshAll(false), 30_000);
-
+    setTimeout(refreshAll, 30_000);
   } finally {
     btn.disabled = false;
     btn.textContent = '↻  REFRESH DATA';
@@ -893,7 +862,8 @@ tickHalving();
 setInterval(tickHalving, 1000);
 
 // ─── NEWS ─────────────────────────────────────────────────
-const NEWS_URL      = 'https://news.google.com/rss/search?q=bitcoin&hl=en-US&gl=US&ceid=US:en';
+// cryptocurrency.cv — free, JSON, open CORS, no proxy needed ✅
+const NEWS_URL      = 'https://cryptocurrency.cv/api/news?coin=bitcoin&limit=8';
 const NEWS_REFRESH  = 10 * 60 * 1000; // 10 minutes
 let newsTimer       = null;
 let lastNewsTs      = 0;
@@ -906,31 +876,20 @@ function timeAgo(dateStr) {
   return Math.floor(diff/86400) + 'd ago';
 }
 
-function extractSource(title) {
-  // Google News RSS appends " - Source Name" at the end of titles
-  const match = title.match(/ - ([^-]+)$/);
-  return match ? match[1].trim() : 'News';
-}
-
-function cleanTitle(title) {
-  return title.replace(/ - [^-]+$/, '').trim();
-}
-
 async function fetchNews() {
-  const proxyUrl = PROXY + encodeURIComponent(NEWS_URL);
-  const res = await fetch(proxyUrl);
+  // Direct fetch — no proxy, works on any network ✅
+  const res = await fetch(NEWS_URL);
   if (!res.ok) throw new Error(`News HTTP ${res.status}`);
-  const text = await res.text();
+  const j = await res.json();
 
-  // Parse XML RSS
-  const parser = new DOMParser();
-  const xml    = parser.parseFromString(text, 'text/xml');
-  const items  = Array.from(xml.querySelectorAll('item')).slice(0, 8);
+  // cryptocurrency.cv returns { articles: [...] } or array directly
+  const items = Array.isArray(j) ? j : (j.articles || j.data || j.news || []);
 
-  return items.map(item => ({
-    title:   item.querySelector('title')?.textContent || '',
-    link:    item.querySelector('link')?.textContent  || '#',
-    pubDate: item.querySelector('pubDate')?.textContent || '',
+  return items.slice(0, 8).map(item => ({
+    title:   item.title   || item.headline || '',
+    link:    item.url     || item.link     || '#',
+    source:  item.source  || item.publisher || item.domain || 'Crypto News',
+    pubDate: item.published_at || item.date || item.publishedAt || '',
   }));
 }
 
@@ -980,9 +939,7 @@ function renderNews(articles) {
   }
 
   list.innerHTML = articles.map((a, i) => {
-    const title  = cleanTitle(a.title);
-    const source = extractSource(a.title);
-    const tag    = getTag(a.title);
+    const tag     = getTag(a.title);
     const tagHtml = tag
       ? `<span class="news-tag ${tag.type}">${tag.icon} ${tag.label}</span>`
       : '';
@@ -990,10 +947,10 @@ function renderNews(articles) {
     return `
       <a class="news-item" href="${a.link}" target="_blank" rel="noopener"
          style="animation-delay:${i * 0.04}s">
-        <div class="news-headline">${title}</div>
+        <div class="news-headline">${a.title}</div>
         <div class="news-meta">
           ${tagHtml}
-          <span class="news-source">${source}</span>
+          <span class="news-source">${a.source}</span>
           <span class="news-time">${a.pubDate ? timeAgo(a.pubDate) : ''}</span>
         </div>
       </a>`;
@@ -1014,7 +971,7 @@ async function refreshNews() {
 }
 
 // ─── BOOT ─────────────────────────────────────────────────
-refreshAll(true); // first load — uses longer stagger delays
+refreshAll();
 refreshTimer = setInterval(refreshAll, REFRESH_MS);
 
 // News on its own 10-minute cycle — delayed 5s so price loads first
