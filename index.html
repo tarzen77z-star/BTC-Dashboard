@@ -314,10 +314,6 @@ body::before{content:'';position:fixed;inset:0;
         <span class="info-key">Supply Mined</span>
         <span class="info-val" id="i-pct">—</span>
       </div>
-      <div class="info-row">
-        <span class="info-key">Rank</span>
-        <span class="info-val">#1 by Market Cap</span>
-      </div>
     </div>
   </div>
 
@@ -469,18 +465,17 @@ body::before{content:'';position:fixed;inset:0;
   </div>
 
   <div class="badges">
-    <span class="badge">PRICE · COINDESK</span>
-    <span class="badge">STATS · COINLORE VIA SUPABASE</span>
-    <span class="badge">CHART · COINLORE VIA SUPABASE</span>
+    <span class="badge">PRICE · COINBASE</span>
+    <span class="badge">STATS · COINLORE (DIRECT TEST)</span>
+    <span class="badge">CHART · COINLORE OHLCV</span>
     <span class="badge">FNG · ALTERNATIVE.ME</span>
     <span class="badge">NEWS · GOOGLE NEWS + RSS2JSON</span>
-    <span class="badge">ZERO PROXIES ✅</span>
   </div>
 
   <button class="refresh-btn" id="refreshBtn" onclick="refreshAll()">↻ &nbsp;REFRESH DATA</button>
 
   <div class="footer">
-    Price via <a href="https://coindesk.com" target="_blank">CoinDesk</a> ·
+    Price via <a href="https://coinbase.com" target="_blank">Coinbase</a> ·
     Stats &amp; Chart via <a href="https://coinlore.com" target="_blank">CoinLore</a> + <a href="https://supabase.com" target="_blank">Supabase</a><br>
     Sentiment via <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank">Alternative.me</a> ·
     News via <a href="https://news.google.com" target="_blank">Google News</a> + <a href="https://rss2json.com" target="_blank">rss2json</a><br>
@@ -492,20 +487,19 @@ body::before{content:'';position:fixed;inset:0;
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
 // ─────────────────────────────────────────────────────────
-//  CONFIG — 100% proxy-free ✅
-//  CoinDesk        → live price       (no proxy, open CORS)
-//  Supabase Edge   → stats + chart    (your own backend)
-//  Alternative.me  → Fear & Greed     (no proxy, open CORS)
-//  cryptocurrency.cv → news           (no proxy, open CORS)
-//  Halving          → local math      (no API)
+//  CONFIG
+//  Coinbase v2     → live price       (open CORS ✅)
+//  CoinLore        → stats + chart    (testing direct CORS)
+//  Alternative.me  → Fear & Greed     (open CORS ✅)
+//  rss2json        → news             (open CORS ✅)
+//  Halving         → local math       (no API)
 // ─────────────────────────────────────────────────────────
-const COINDESK_URL  = 'https://api.coindesk.com/v1/bpi/currentprice/USD.json';
+const COINBASE_URL  = 'https://api.coinbase.com/v2/prices/BTC-USD/spot';
 const FNG_URL       = 'https://api.alternative.me/fng/?limit=1';
 const REFRESH_MS    = 60_000;
 const STATS_TTL     = 5 * 60 * 1000;
 
-// ── REPLACE THIS with your Supabase project URL ──────────
-// Find it in: Supabase Dashboard → Settings → API → Project URL
+// ── REPLACE with your Supabase project URL after setup ───
 const SUPABASE_URL  = 'https://YOUR-PROJECT-ID.supabase.co/functions/v1/btc-proxy';
 // ─────────────────────────────────────────────────────────
 
@@ -529,17 +523,19 @@ const sleep    = ms => new Promise(r => setTimeout(r, ms));
 const stale = { price: null, fg: null };
 
 // ─── FETCH ────────────────────────────────────────────────
-async function getCoinDeskPrice() {
-  const res = await fetch(COINDESK_URL);
-  if (!res.ok) throw new Error(`CoinDesk ${res.status}`);
+async function getCoinbasePrice() {
+  // Coinbase v2 has explicit open CORS — confirmed works from browsers
+  const res = await fetch(COINBASE_URL);
+  if (!res.ok) throw new Error(`Coinbase ${res.status}`);
   const j = await res.json();
-  return { price: j.bpi.USD.rate_float };
+  // Response: { data: { base, currency, amount } }
+  return { price: parseFloat(j.data.amount) };
 }
 
 async function getCoinLoreStats() {
   if (statsCache && (Date.now() - statsFetchTs) < STATS_TTL) return statsCache;
-  const res = await fetch(`${SUPABASE_URL}?type=stats`);
-  if (!res.ok) throw new Error(`Stats ${res.status}`);
+  const res = await fetch('https://api.coinlore.net/api/ticker/?id=90');
+  if (!res.ok) throw new Error(`CoinLore stats ${res.status}`);
   const j = await res.json();
   statsCache = j[0];
   statsFetchTs = Date.now();
@@ -548,8 +544,8 @@ async function getCoinLoreStats() {
 
 async function getCoinLoreOHLCV() {
   if (ohlcvCache && (Date.now() - ohlcvFetchTs) < STATS_TTL) return ohlcvCache;
-  const res = await fetch(`${SUPABASE_URL}?type=chart`);
-  if (!res.ok) throw new Error(`Chart ${res.status}`);
+  const res = await fetch('https://api.coinlore.net/api/coin/ohlcv/?coin=90');
+  if (!res.ok) throw new Error(`CoinLore OHLCV ${res.status}`);
   ohlcvCache = await res.json();
   ohlcvFetchTs = Date.now();
   return ohlcvCache;
@@ -574,7 +570,7 @@ function renderPrice(priceData, isStale=false) {
   }
   $('priceUpdated').textContent = isStale
     ? '⚠ Stale data · retrying…'
-    : `CoinDesk · ${nowStr()}`;
+    : `Coinbase · ${nowStr()}`;
 }
 
 // ─── RENDER STATS ─────────────────────────────────────────
@@ -776,47 +772,60 @@ function calcPL() {
 }
 
 // ─── MAIN REFRESH ─────────────────────────────────────────
+// Each section fetches independently — one failure won't block others
 async function refreshAll() {
   const btn = $('refreshBtn');
   btn.disabled = true;
   btn.textContent = '↻  REFRESHING…';
   $('errorBox').style.display = 'none';
 
+  let anyError = false;
+
+  // 1. Coinbase price — independent
   try {
-    // 1. CoinDesk price — always fresh
-    const cd = await getCoinDeskPrice();
+    const cd = await getCoinbasePrice();
     stale.price = cd;
     renderPrice(cd);
+  } catch(e) {
+    console.error('Price error:', e);
+    if (stale.price) renderPrice(stale.price, true);
+    else { $('priceUpdated').textContent = '⚠ Price unavailable'; anyError = true; }
+  }
 
-    // 2. CoinLore stats — cached 5 min
-    await sleep(300);
+  // 2. CoinLore stats via Supabase — independent
+  try {
     const coin = await getCoinLoreStats();
     renderStats(coin);
+  } catch(e) {
+    console.warn('Stats unavailable (Supabase not set up yet):', e.message);
+    // Silently skip — expected until Supabase is configured
+  }
 
-    // 3. CoinLore OHLCV chart — cached 5 min, large payload
-    await sleep(300);
+  // 3. CoinLore chart via Supabase — independent
+  try {
     const ohlcv = await getCoinLoreOHLCV();
     renderChart(ohlcv, activeLimit);
+  } catch(e) {
+    console.warn('Chart unavailable (Supabase not set up yet):', e.message);
+    $('chartMsg').textContent = '⚠ Add Supabase to enable chart';
+    $('chartMsg').style.display = 'flex';
+    $('priceChart').style.display = 'none';
+  }
 
-    // 4. Fear & Greed
+  // 4. Fear & Greed — independent
+  try {
     const fg = await getFG();
     if (fg) stale.fg = fg;
     renderFG(fg || stale.fg);
     renderSignal(fg || stale.fg);
-
-  } catch(err) {
-    console.error(err);
-    if (stale.price) {
-      renderPrice(stale.price, true);
-    } else {
-      $('errorBox').style.display = 'block';
-      $('errorBox').innerHTML = '⚠ Could not load data. Check your connection.';
-    }
-    setTimeout(refreshAll, 30_000);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '↻  REFRESH DATA';
+  } catch(e) {
+    console.error('FG error:', e);
+    if (stale.fg) { renderFG(stale.fg); renderSignal(stale.fg); }
+    else $('fgMood').textContent = 'Unavailable';
   }
+
+  btn.disabled = false;
+  btn.textContent = '↻  REFRESH DATA';
 }
 
 // ─── HALVING COUNTDOWN ────────────────────────────────────
