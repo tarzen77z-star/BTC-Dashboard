@@ -284,13 +284,12 @@ body::before{content:'';position:fixed;inset:0;
   <div class="section">
     <div class="section-title">Price Chart</div>
     <div class="time-tabs">
-      <button class="time-tab active" data-limit="14" onclick="switchTab(this)">14D</button>
-      <button class="time-tab" data-limit="30" onclick="switchTab(this)">30D</button>
-      <button class="time-tab" data-limit="90" onclick="switchTab(this)">90D</button>
-      <button class="time-tab" data-limit="120" onclick="switchTab(this)">120D</button>
-      <button class="time-tab" data-limit="365" onclick="switchTab(this)">1Y</button>
-      <button class="time-tab" data-limit="1095" onclick="switchTab(this)">3Y</button>
-      <button class="time-tab" data-limit="9999" onclick="switchTab(this)">ALL</button>
+      <button class="time-tab active" data-limit="1"   onclick="switchTab(this)">1D</button>
+      <button class="time-tab"        data-limit="14"  onclick="switchTab(this)">14D</button>
+      <button class="time-tab"        data-limit="30"  onclick="switchTab(this)">30D</button>
+      <button class="time-tab"        data-limit="90"  onclick="switchTab(this)">90D</button>
+      <button class="time-tab"        data-limit="120" onclick="switchTab(this)">120D</button>
+      <button class="time-tab"        data-limit="365" onclick="switchTab(this)">1Y</button>
     </div>
     <div class="chart-wrap">
       <div class="chart-msg" id="chartMsg">Loading chart…</div>
@@ -500,7 +499,7 @@ const REFRESH_MS    = 60_000;
 const STATS_TTL     = 5 * 60 * 1000;
 
 let chartInst     = null;
-let activeLimit   = 14;
+let activeLimit   = 1; // default to 1D tab
 let ohlcvCache    = null; // full OHLCV array cached after first fetch
 let ohlcvFetchTs  = 0;
 let statsCache    = null;
@@ -538,46 +537,29 @@ async function getCoinLoreStats() {
   return statsCache;
 }
 
+// ─── CHART DATA — Coinbase Exchange candles endpoint ──────
+// Format returned: [timestamp, low, high, open, close, volume]
+// granularity: 3600 = 1 hour, 86400 = 1 day
+// Max 300 candles per request — one single call per tab ✅
+const CANDLE_BASE = 'https://api.exchange.coinbase.com/products/BTC-USD/candles';
+
+async function fetchCandles(granularity, limit) {
+  const end   = Math.floor(Date.now() / 1000);
+  const start = end - (granularity * limit);
+  const url   = `${CANDLE_BASE}?granularity=${granularity}&start=${start}&end=${end}`;
+  const res   = await fetch(url);
+  if (!res.ok) throw new Error(`Candles ${res.status}`);
+  const data  = await res.json();
+  // Comes back newest→oldest, reverse to oldest→newest for chart
+  return data.reverse();
+}
+
 async function getCoinLoreOHLCV() {
+  // This function name kept for compatibility — now uses Coinbase candles
+  // Default loads 1Y of daily candles
   if (ohlcvCache && (Date.now() - ohlcvFetchTs) < STATS_TTL) return ohlcvCache;
-
-  // Use Coinbase spot price with ?date= parameter — same API already working ✅
-  // Fetch daily closing prices for the last 365 days in parallel batches
-  const today = new Date();
-  const dates = [];
-  for (let i = 365; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    const yyyy = d.getFullYear();
-    const mm   = String(d.getMonth() + 1).padStart(2, '0');
-    const dd   = String(d.getDate()).padStart(2, '0');
-    dates.push(`${yyyy}-${mm}-${dd}`);
-  }
-
-  // Fetch in batches of 10 to avoid overwhelming Coinbase
-  const results = [];
-  for (let i = 0; i < dates.length; i += 10) {
-    const batch = dates.slice(i, i + 10);
-    const prices = await Promise.all(
-      batch.map(async date => {
-        try {
-          const r = await fetch(`https://api.coinbase.com/v2/prices/BTC-USD/spot?date=${date}`);
-          if (!r.ok) return null;
-          const j = await r.json();
-          return [date, parseFloat(j.data.amount)];
-        } catch { return null; }
-      })
-    );
-    results.push(...prices.filter(Boolean));
-  }
-
-  ohlcvCache = results; // [[date, price], ...] oldest→newest
-  ohlcvFetchTs = Date.now();
-
-  // Debug
-  const last3 = ohlcvCache.slice(-3);
-  last3.forEach(([date, price]) => console.log(`${date} → $${price}`));
-
+  ohlcvCache    = await fetchCandles(86400, 365);
+  ohlcvFetchTs  = Date.now();
   return ohlcvCache;
 }
 
@@ -635,17 +617,22 @@ function renderStats(coin) {
 
 // ─── RENDER CHART ─────────────────────────────────────────
 // OHLCV format: [timestamp, open, high, low, close, volume]
-function renderChart(ohlcv, limit) {
-  // ohlcv = [ ["2026-04-08", 81307.16], ... ] oldest→newest
-  const slice = limit >= 9999 ? ohlcv : ohlcv.slice(-limit);
+function renderChart(candles, limit) {
+  // candles = [[timestamp, low, high, open, close, volume], ...] oldest→newest
+  const slice = candles.slice(-limit);
 
-  const vals   = slice.map(([date, price]) => price);
-  const labels = slice.map(([date, price]) => {
-    const [year, month, day] = date.split('-').map(Number);
-    const d = new Date(year, month - 1, day);
-    if (limit >= 1095) {
-      return d.toLocaleDateString('en-US', {year:'numeric', month:'short'});
+  const vals   = slice.map(c => c[4]); // close price = index 4
+  const labels = slice.map(c => {
+    const d = new Date(c[0] * 1000); // timestamp in seconds → ms
+    if (limit <= 24) {
+      // 1D — show hours
+      return d.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
     }
+    if (limit >= 365) {
+      // 1Y — show month + year
+      return d.toLocaleDateString('en-US', {month:'short', year:'numeric'});
+    }
+    // Default — show month + day
     return d.toLocaleDateString('en-US', {month:'short', day:'numeric'});
   });
 
@@ -696,21 +683,36 @@ function renderChart(ohlcv, limit) {
   });
 }
 
+// ─── TAB CONFIG ───────────────────────────────────────────
+// [granularity seconds, candles to fetch]
+const TAB_CONFIG = {
+  '1':   [3600,  24],   // 1D  — 24 hourly candles
+  '14':  [86400, 14],   // 14D — 14 daily candles
+  '30':  [86400, 30],   // 30D — 30 daily candles
+  '90':  [86400, 90],   // 90D — 90 daily candles
+  '120': [86400, 120],  // 120D — 120 daily candles
+  '365': [86400, 365],  // 1Y  — 365 daily candles
+};
+
 // ─── TAB SWITCH ───────────────────────────────────────────
 async function switchTab(btn) {
-  activeLimit = parseInt(btn.dataset.limit);
+  const key = btn.dataset.limit;
+  activeLimit = parseInt(key);
   document.querySelectorAll('.time-tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
-  if (ohlcvCache) {
-    renderChart(ohlcvCache, activeLimit);
-  } else {
-    $('chartMsg').textContent = 'Loading…';
+
+  $('chartMsg').textContent = 'Loading chart…';
+  $('chartMsg').style.display = 'flex';
+  $('priceChart').style.display = 'none';
+
+  try {
+    const [gran, limit] = TAB_CONFIG[key] || [86400, 14];
+    const data = await fetchCandles(gran, limit);
+    renderChart(data, limit);
+  } catch(e) {
+    console.error('Chart tab error:', e);
+    $('chartMsg').textContent = '⚠ Chart unavailable — tap Refresh to retry';
     $('chartMsg').style.display = 'flex';
-    $('priceChart').style.display = 'none';
-    try {
-      const ohlcv = await getCoinLoreOHLCV();
-      renderChart(ohlcv, activeLimit);
-    } catch { $('chartMsg').textContent = '⚠ Chart unavailable'; }
   }
 }
 
@@ -836,10 +838,11 @@ async function refreshAll() {
     // Silently skip — will retry on next refresh
   }
 
-  // 3. CoinLore chart via Supabase — independent
+  // 3. Chart — Coinbase candles, single request ✅
   try {
-    const ohlcv = await getCoinLoreOHLCV();
-    renderChart(ohlcv, activeLimit);
+    const [gran, limit] = TAB_CONFIG[String(activeLimit)] || [3600, 24];
+    const candles = await fetchCandles(gran, limit);
+    renderChart(candles, limit);
   } catch(e) {
     console.warn('Chart unavailable:', e.message);
     $('chartMsg').textContent = '⚠ Chart unavailable — tap Refresh to retry';
