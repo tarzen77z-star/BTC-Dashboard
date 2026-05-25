@@ -152,34 +152,24 @@ body::before{content:'';position:fixed;inset:0;
 .halving-info-key{color:var(--muted)}
 .halving-info-val{color:var(--text)}
 
-/* ── ORDER BOOK HEATMAP ───────────────────────────────────── */
-.ob-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
-.ob-header{display:grid;grid-template-columns:1fr 80px 80px;gap:4px;
-  padding:8px 12px;border-bottom:1px solid var(--border);
-  font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
-.ob-header span:last-child{text-align:right}
-.ob-body{display:grid;grid-template-columns:1fr 1fr;min-height:260px}
-.ob-side{display:flex;flex-direction:column;position:relative}
-.ob-side.bids{border-right:1px solid var(--border)}
-.ob-row{display:grid;grid-template-columns:70px 1fr 60px;gap:4px;
-  padding:3px 8px;position:relative;align-items:center;font-family:var(--mono);font-size:10px}
-.ob-row.ask-row{direction:rtl} /* flip ask side right-to-left */
-.ob-row.ask-row span{direction:ltr}
-.ob-bar{position:absolute;top:0;bottom:0;opacity:0.15;border-radius:2px;transition:width 0.5s ease}
-.ob-bar.bid-bar{right:0;background:var(--green)}
-.ob-bar.ask-bar{left:0;background:var(--red)}
-.ob-price{font-weight:500;z-index:1}
-.ob-price.bid{color:var(--green)}
-.ob-price.ask{color:var(--red)}
-.ob-size{color:var(--muted);z-index:1;font-size:9px}
-.ob-total{color:var(--muted);z-index:1;font-size:9px;text-align:right}
-.ob-spread{display:flex;justify-content:center;align-items:center;
-  padding:6px;background:var(--surface2);border-top:1px solid var(--border);
-  border-bottom:1px solid var(--border);
-  font-family:var(--mono);font-size:10px;color:var(--muted);gap:8px}
-.ob-spread-val{color:var(--gold)}
-.ob-updated{font-family:var(--mono);font-size:9px;color:var(--muted);
-  padding:6px 12px;text-align:center}
+/* ── HEATMAP ──────────────────────────────────────────────── */
+.hm-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.hm-toolbar{display:flex;gap:0;border-bottom:1px solid var(--border)}
+.hm-stat{flex:1;padding:8px 12px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:2px}
+.hm-stat:last-child{border-right:none}
+.hm-stat-label{font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase}
+.hm-stat span:last-child{font-family:var(--mono);font-size:12px;color:var(--text)}
+.hm-wrap{position:relative;width:100%;height:240px;background:#000}
+#hmCanvas{width:100%;height:100%;display:block;image-rendering:pixelated}
+.hm-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,0.7);font-family:var(--mono);font-size:12px;
+  color:var(--text);text-align:center;line-height:1.8;transition:opacity .5s}
+.hm-overlay.hidden{opacity:0;pointer-events:none}
+.hm-legend{display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid var(--border)}
+.hm-legend-bar{flex:1;height:6px;border-radius:3px;
+  background:linear-gradient(90deg,#001a00,#003300,#00cc44,#ffff00,#ff6600,#cc0000)}
+.hm-axis{display:flex;justify-content:space-between;padding:2px 12px 6px;
+  font-family:var(--mono);font-size:9px;color:var(--muted)}
 
 /* ── NEWS ─────────────────────────────────────────────── */
 .news-list{display:flex;flex-direction:column;gap:2px}
@@ -318,28 +308,31 @@ body::before{content:'';position:fixed;inset:0;
     </div>
   </div>
 
-  <!-- ORDER BOOK HEATMAP -->
+
+  <!-- LIVE HEATMAP -->
   <div class="section">
-    <div class="section-title">Market Depth</div>
-    <div class="ob-card">
-      <div class="ob-header">
-        <span>PRICE (USD)</span>
-        <span>SIZE (BTC)</span>
-        <span>TOTAL</span>
+    <div class="section-title">Liquidity Heatmap <span style="font-size:10px;letter-spacing:1px;color:var(--muted)">(LIVE · BUILDS OVER TIME)</span></div>
+    <div class="hm-card">
+      <div class="hm-toolbar">
+        <div class="hm-stat"><span class="hm-stat-label">SNAPSHOTS</span><span id="hmSnaps">0</span></div>
+        <div class="hm-stat"><span class="hm-stat-label">ELAPSED</span><span id="hmElapsed">0:00</span></div>
+        <div class="hm-stat"><span class="hm-stat-label">STATUS</span><span id="hmStatus" style="color:var(--muted)">Connecting…</span></div>
       </div>
-      <!-- Spread bar -->
-      <div class="ob-spread" id="obSpread">
-        <span>Spread</span>
-        <span class="ob-spread-val" id="obSpreadVal">—</span>
-        <span id="obSpreadPct" style="color:var(--muted)"></span>
+      <div class="hm-wrap">
+        <canvas id="hmCanvas"></canvas>
+        <div class="hm-overlay" id="hmOverlay">
+          <div class="hm-overlay-text">🔴 Connecting to Coinbase…<br><span style="font-size:10px;opacity:0.6">Heatmap builds as data arrives</span></div>
+        </div>
       </div>
-      <div class="ob-body">
-        <!-- ASKS (sell orders) — shown top, red -->
-        <div class="ob-side asks" id="obAsks"></div>
-        <!-- BIDS (buy orders) — shown bottom, green -->
-        <div class="ob-side bids" id="obBids"></div>
+      <div class="hm-legend">
+        <span style="color:var(--muted);font-size:9px;font-family:var(--mono)">LOW LIQUIDITY</span>
+        <div class="hm-legend-bar"></div>
+        <span style="color:var(--muted);font-size:9px;font-family:var(--mono)">HIGH LIQUIDITY</span>
       </div>
-      <div class="ob-updated" id="obUpdated">Loading order book…</div>
+      <div class="hm-axis" id="hmAxis"></div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);padding:6px 12px;text-align:center">
+        Green = Buy orders · Red = Sell orders · Brighter = More BTC at that price
+      </div>
     </div>
   </div>
 
@@ -389,25 +382,6 @@ body::before{content:'';position:fixed;inset:0;
       <div class="signal-disclaimer">
         ⚠ This is a simplified educational indicator, not financial advice.
         Crypto is volatile. Never invest more than you can afford to lose.
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">Stock Market Sentiment</div>
-    <div class="fg-card">
-      <div class="fg-top">
-        <div class="fg-score" id="sfgScore" style="color:var(--muted)">—</div>
-        <div class="fg-right">
-          <div class="fg-label">CNN FEAR &amp; GREED</div>
-          <div class="fg-mood" id="sfgMood" style="color:var(--muted)">Loading…</div>
-        </div>
-      </div>
-      <div class="fg-track"><div class="fg-fill" id="sfgFill" style="width:0%"></div></div>
-      <div class="fg-ticks"><span>Extreme Fear</span><span>Neutral</span><span>Extreme Greed</span></div>
-      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:10px;padding-top:8px;border-top:1px solid var(--border);line-height:1.6">
-        US stock market sentiment. When stocks fear, BTC often follows.
-        Source: <a href="https://feargreedchart.com" target="_blank" style="color:var(--muted)">feargreedchart.com</a>
       </div>
     </div>
   </div>
@@ -474,9 +448,8 @@ body::before{content:'';position:fixed;inset:0;
     <span class="badge">PRICE · COINBASE</span>
     <span class="badge">STATS · COINLORE</span>
     <span class="badge">CHART · COINBASE CANDLES</span>
-    <span class="badge">ORDER BOOK · COINBASE L2</span>
-    <span class="badge">CRYPTO FNG · ALTERNATIVE.ME</span>
-    <span class="badge">STOCK FNG · FEARGREEDCHART.COM</span>
+    <span class="badge">HEATMAP · COINBASE WEBSOCKET</span>
+    <span class="badge">FNG · ALTERNATIVE.ME</span>
     <span class="badge">NEWS · GOOGLE NEWS + RSS2JSON</span>
   </div>
 
@@ -843,37 +816,6 @@ function renderSignal(fg) {
   $('sf-score').className   = `sf-val ${scoreClass}`;
 }
 
-// ─── STOCK MARKET FEAR & GREED ────────────────────────────
-// feargreedchart.com — free, no key, CORS enabled ✅
-const STOCK_FG_URL = 'https://feargreedchart.com/api/current';
-let stockFgTimer   = null;
-
-async function getStockFG() {
-  try {
-    const res = await fetch(STOCK_FG_URL);
-    if (!res.ok) return null;
-    return await res.json();
-  } catch { return null; }
-}
-
-function renderStockFG(data) {
-  if (!data) {
-    $('sfgMood').textContent = 'Unavailable';
-    return;
-  }
-  // feargreedchart.com returns { score, label, ... }
-  const val  = data.score ?? data.value ?? data.rating ?? null;
-  const mood = data.label ?? data.classification ?? data.description ?? '—';
-  if (val === null) { $('sfgMood').textContent = 'Unavailable'; return; }
-
-  const col = fgCol(parseInt(val));
-  $('sfgScore').textContent = Math.round(val);
-  $('sfgScore').style.color = col;
-  $('sfgMood').textContent  = String(mood).toUpperCase();
-  $('sfgMood').style.color  = col;
-  $('sfgFill').style.width  = Math.round(val) + '%';
-}
-
 // ─── MAIN REFRESH ─────────────────────────────────────────
 // Each section fetches independently — one failure won't block others
 async function refreshAll() {
@@ -929,96 +871,248 @@ async function refreshAll() {
     else $('fgMood').textContent = 'Unavailable';
   }
 
-  // 5. Stock Market Fear & Greed — independent
-  try {
-    const sfg = await getStockFG();
-    renderStockFG(sfg);
-  } catch(e) {
-    console.warn('Stock FG error:', e);
-    $('sfgMood').textContent = 'Unavailable';
-  }
-
   btn.disabled = false;
   btn.textContent = '↻  REFRESH DATA';
 }
 
-// ─── ORDER BOOK HEATMAP ───────────────────────────────────
-// Coinbase level2 order book — open CORS, no key needed ✅
-const OB_URL     = 'https://api.exchange.coinbase.com/products/BTC-USD/book?level=2';
-const OB_ROWS    = 15; // show top 15 bids and 15 asks
-const OB_REFRESH = 30_000; // refresh every 30 seconds
-let obTimer      = null;
+// ─── LIVE LIQUIDITY HEATMAP ───────────────────────────────
+// Connects to Coinbase WebSocket, captures order book every 3s,
+// renders as color-coded heatmap canvas. Builds up over time.
+// ──────────────────────────────────────────────────────────
 
-async function fetchOrderBook() {
-  const res = await fetch(OB_URL);
-  if (!res.ok) throw new Error(`Order book ${res.status}`);
-  return res.json();
+const HM = {
+  WS_URL:       'wss://advanced-trade-ws.coinbase.com',
+  SNAPSHOT_MS:  3000,       // capture every 3 seconds
+  MAX_SNAPS:    300,        // keep last 300 = 15 minutes
+  PRICE_LEVELS: 80,         // number of price rows to show
+  PRICE_BUCKET: 100,        // bucket size in USD ($100 per row)
+
+  ws:         null,
+  bids:       {},           // current bids {price: size}
+  asks:       {},           // current asks {price: size}
+  snapshots:  [],           // [{midPrice, bids:{}, asks:{}}]
+  startTs:    null,
+  snapTimer:  null,
+  elapsedTimer: null,
+  canvas:     null,
+  ctx:        null,
+  connected:  false,
+};
+
+function hmInit() {
+  HM.canvas = document.getElementById('hmCanvas');
+  HM.ctx    = HM.canvas.getContext('2d');
+  HM.startTs = Date.now();
+
+  // Size canvas to container
+  const wrap = HM.canvas.parentElement;
+  HM.canvas.width  = wrap.offsetWidth  || 440;
+  HM.canvas.height = wrap.offsetHeight || 240;
+
+  hmConnect();
+  HM.elapsedTimer = setInterval(hmUpdateElapsed, 1000);
 }
 
-function renderOrderBook(data) {
-  // data.bids = [["price","size",orders], ...] highest bid first
-  // data.asks = [["price","size",orders], ...] lowest ask first
-  const bids = data.bids.slice(0, OB_ROWS).map(r => ({
-    price: parseFloat(r[0]),
-    size:  parseFloat(r[1]),
-  }));
-  const asks = data.asks.slice(0, OB_ROWS).map(r => ({
-    price: parseFloat(r[0]),
-    size:  parseFloat(r[1]),
-  }));
-
-  // Calculate cumulative totals
-  let bidTotal = 0, askTotal = 0;
-  bids.forEach(r => { bidTotal += r.size; r.total = bidTotal; });
-  asks.forEach(r => { askTotal += r.size; r.total = askTotal; });
-
-  const maxTotal = Math.max(bidTotal, askTotal);
-
-  // Spread
-  const bestBid   = bids[0]?.price || 0;
-  const bestAsk   = asks[0]?.price || 0;
-  const spread    = bestAsk - bestBid;
-  const spreadPct = bestBid ? ((spread / bestBid) * 100).toFixed(3) : '—';
-  $('obSpreadVal').textContent = '$' + spread.toFixed(2);
-  $('obSpreadPct').textContent = `(${spreadPct}%)`;
-
-  // Render asks — reversed so closest to price is at top of its column
-  const asksEl = $('obAsks');
-  asksEl.innerHTML = [...asks].reverse().map(r => {
-    const pct = (r.total / maxTotal * 100).toFixed(1);
-    return `
-      <div class="ob-row ask-row">
-        <div class="ob-bar ask-bar" style="width:${pct}%"></div>
-        <span class="ob-price ask">$${r.price.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0})}</span>
-        <span class="ob-size">${r.size.toFixed(3)}</span>
-        <span class="ob-total">${r.total.toFixed(2)}</span>
-      </div>`;
-  }).join('');
-
-  // Render bids — highest bid at top
-  const bidsEl = $('obBids');
-  bidsEl.innerHTML = bids.map(r => {
-    const pct = (r.total / maxTotal * 100).toFixed(1);
-    return `
-      <div class="ob-row">
-        <div class="ob-bar bid-bar" style="width:${pct}%"></div>
-        <span class="ob-price bid">$${r.price.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0})}</span>
-        <span class="ob-size">${r.size.toFixed(3)}</span>
-        <span class="ob-total">${r.total.toFixed(2)}</span>
-      </div>`;
-  }).join('');
-
-  $('obUpdated').textContent = `Order book · ${nowStr()} · Refreshes every 30s`;
-}
-
-async function refreshOrderBook() {
+function hmConnect() {
   try {
-    const data = await fetchOrderBook();
-    renderOrderBook(data);
+    HM.ws = new WebSocket(HM.WS_URL);
   } catch(e) {
-    console.warn('Order book error:', e.message);
-    $('obUpdated').textContent = '⚠ Order book unavailable — will retry';
+    hmSetStatus('WebSocket unavailable', 'var(--red)');
+    return;
   }
+
+  HM.ws.onopen = () => {
+    HM.ws.send(JSON.stringify({
+      type: 'subscribe',
+      product_ids: ['BTC-USD'],
+      channel: 'level2',
+    }));
+    hmSetStatus('Connected', 'var(--green)');
+    HM.connected = true;
+    document.getElementById('hmOverlay').classList.add('hidden');
+    // Start capturing snapshots
+    HM.snapTimer = setInterval(hmCaptureSnapshot, HM.SNAPSHOT_MS);
+  };
+
+  HM.ws.onmessage = (evt) => {
+    try {
+      const msg = JSON.parse(evt.data);
+      hmProcessMessage(msg);
+    } catch {}
+  };
+
+  HM.ws.onerror = () => {
+    hmSetStatus('Error — retrying…', 'var(--red)');
+  };
+
+  HM.ws.onclose = () => {
+    HM.connected = false;
+    clearInterval(HM.snapTimer);
+    hmSetStatus('Reconnecting…', 'var(--muted)');
+    // Reconnect after 3s
+    setTimeout(hmConnect, 3000);
+  };
+}
+
+function hmProcessMessage(msg) {
+  // Coinbase advanced-trade-ws level2 format
+  if (msg.channel !== 'l2_data') return;
+  const events = msg.events || [];
+  events.forEach(evt => {
+    const updates = evt.updates || [];
+    updates.forEach(u => {
+      const price = parseFloat(u.price_level);
+      const size  = parseFloat(u.new_quantity);
+      if (u.side === 'bid') {
+        if (size === 0) delete HM.bids[price];
+        else HM.bids[price] = size;
+      } else {
+        if (size === 0) delete HM.asks[price];
+        else HM.asks[price] = size;
+      }
+    });
+  });
+}
+
+function hmCaptureSnapshot() {
+  // Find mid price
+  const bidPrices = Object.keys(HM.bids).map(Number);
+  const askPrices = Object.keys(HM.asks).map(Number);
+  if (!bidPrices.length || !askPrices.length) return;
+
+  const bestBid = Math.max(...bidPrices);
+  const bestAsk = Math.min(...askPrices);
+  const mid     = (bestBid + bestAsk) / 2;
+
+  // Snapshot: store bucketed sizes around mid price
+  const snap = { mid, bids: {}, asks: {} };
+  const halfRange = (HM.PRICE_LEVELS / 2) * HM.PRICE_BUCKET;
+  const lo = mid - halfRange;
+  const hi = mid + halfRange;
+
+  // Aggregate bids into $100 buckets
+  bidPrices.forEach(p => {
+    if (p < lo || p > hi) return;
+    const bucket = Math.floor(p / HM.PRICE_BUCKET) * HM.PRICE_BUCKET;
+    snap.bids[bucket] = (snap.bids[bucket] || 0) + HM.bids[p];
+  });
+  askPrices.forEach(p => {
+    if (p < lo || p > hi) return;
+    const bucket = Math.floor(p / HM.PRICE_BUCKET) * HM.PRICE_BUCKET;
+    snap.asks[bucket] = (snap.asks[bucket] || 0) + HM.asks[p];
+  });
+
+  HM.snapshots.push(snap);
+  if (HM.snapshots.length > HM.MAX_SNAPS) HM.snapshots.shift();
+
+  document.getElementById('hmSnaps').textContent = HM.snapshots.length;
+  hmDraw();
+}
+
+function hmDraw() {
+  const snaps  = HM.snapshots;
+  if (!snaps.length) return;
+
+  const W = HM.canvas.width;
+  const H = HM.canvas.height;
+  const ctx = HM.ctx;
+
+  ctx.clearRect(0, 0, W, H);
+
+  const latestMid = snaps[snaps.length - 1].mid;
+  const halfRange = (HM.PRICE_LEVELS / 2) * HM.PRICE_BUCKET;
+  const priceLo   = Math.floor((latestMid - halfRange) / HM.PRICE_BUCKET) * HM.PRICE_BUCKET;
+  const priceHi   = priceLo + HM.PRICE_LEVELS * HM.PRICE_BUCKET;
+
+  // Find max size for color scaling
+  let maxSize = 0.1;
+  snaps.forEach(s => {
+    Object.values(s.bids).forEach(v => { if (v > maxSize) maxSize = v; });
+    Object.values(s.asks).forEach(v => { if (v > maxSize) maxSize = v; });
+  });
+
+  const cellW = W / HM.MAX_SNAPS;
+  const cellH = H / HM.PRICE_LEVELS;
+
+  snaps.forEach((snap, si) => {
+    const x = si * cellW;
+
+    for (let pi = 0; pi < HM.PRICE_LEVELS; pi++) {
+      const price  = priceLo + pi * HM.PRICE_BUCKET;
+      const y      = H - (pi + 1) * cellH; // bottom = lowest price
+
+      const bidSize = snap.bids[price] || 0;
+      const askSize = snap.asks[price] || 0;
+
+      if (bidSize > 0) {
+        const intensity = Math.min(bidSize / maxSize, 1);
+        ctx.fillStyle = hmColor(intensity, 'bid');
+        ctx.fillRect(x, y, Math.ceil(cellW) + 1, Math.ceil(cellH) + 1);
+      } else if (askSize > 0) {
+        const intensity = Math.min(askSize / maxSize, 1);
+        ctx.fillStyle = hmColor(intensity, 'ask');
+        ctx.fillRect(x, y, Math.ceil(cellW) + 1, Math.ceil(cellH) + 1);
+      }
+    }
+  });
+
+  // Draw current price line
+  const midY = H - ((latestMid - priceLo) / (priceHi - priceLo)) * H;
+  ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+  ctx.lineWidth   = 1;
+  ctx.setLineDash([4, 3]);
+  ctx.beginPath();
+  ctx.moveTo(0, midY);
+  ctx.lineTo(W, midY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Price label on line
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.font      = '9px Share Tech Mono, monospace';
+  ctx.fillText('$' + Math.round(latestMid).toLocaleString(), 4, midY - 3);
+
+  // Update Y-axis labels
+  const axisEl = document.getElementById('hmAxis');
+  const steps  = 5;
+  const labels = [];
+  for (let i = 0; i <= steps; i++) {
+    const p = priceLo + (i / steps) * (priceHi - priceLo);
+    labels.push('$' + Math.round(p / 1000) + 'k');
+  }
+  axisEl.innerHTML = labels.map(l => `<span>${l}</span>`).join('');
+}
+
+// Color scale: dark → bright for intensity
+// Bids: black → dark green → bright green → yellow
+// Asks: black → dark red → bright red → orange
+function hmColor(t, side) {
+  if (side === 'bid') {
+    const r = Math.round(t < 0.5 ? 0 : (t - 0.5) * 2 * 180);
+    const g = Math.round(t * 230);
+    const b = 0;
+    return `rgb(${r},${g},${b})`;
+  } else {
+    const r = Math.round(t * 220);
+    const g = Math.round(t < 0.5 ? 0 : (t - 0.5) * 2 * 100);
+    const b = 0;
+    return `rgb(${r},${g},${b})`;
+  }
+}
+
+function hmSetStatus(text, color) {
+  const el = document.getElementById('hmStatus');
+  el.textContent  = text;
+  el.style.color  = color || 'var(--text)';
+}
+
+function hmUpdateElapsed() {
+  if (!HM.startTs) return;
+  const secs  = Math.floor((Date.now() - HM.startTs) / 1000);
+  const m     = Math.floor(secs / 60);
+  const s     = secs % 60;
+  document.getElementById('hmElapsed').textContent =
+    m + ':' + String(s).padStart(2, '0');
 }
 
 // ─── HALVING COUNTDOWN ────────────────────────────────────
@@ -1178,11 +1272,8 @@ async function refreshNews() {
 refreshAll();
 refreshTimer = setInterval(refreshAll, REFRESH_MS);
 
-// Order book — delayed 2s, then every 30s
-setTimeout(() => {
-  refreshOrderBook();
-  obTimer = setInterval(refreshOrderBook, OB_REFRESH);
-}, 2000);
+// Start live heatmap WebSocket
+hmInit();
 
 // News on its own 10-minute cycle — delayed 5s so price loads first
 setTimeout(() => {
@@ -1194,12 +1285,9 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     clearInterval(refreshTimer);
     clearInterval(newsTimer);
-    clearInterval(obTimer);
   } else {
     refreshAll();
     refreshTimer = setInterval(refreshAll, REFRESH_MS);
-    refreshOrderBook();
-    obTimer = setInterval(refreshOrderBook, OB_REFRESH);
     if (Date.now() - lastNewsTs > 5 * 60 * 1000) refreshNews();
     newsTimer = setInterval(refreshNews, NEWS_REFRESH);
   }
