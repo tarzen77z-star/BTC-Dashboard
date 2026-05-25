@@ -152,6 +152,35 @@ body::before{content:'';position:fixed;inset:0;
 .halving-info-key{color:var(--muted)}
 .halving-info-val{color:var(--text)}
 
+/* ── ORDER BOOK HEATMAP ───────────────────────────────────── */
+.ob-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.ob-header{display:grid;grid-template-columns:1fr 80px 80px;gap:4px;
+  padding:8px 12px;border-bottom:1px solid var(--border);
+  font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.ob-header span:last-child{text-align:right}
+.ob-body{display:grid;grid-template-columns:1fr 1fr;min-height:260px}
+.ob-side{display:flex;flex-direction:column;position:relative}
+.ob-side.bids{border-right:1px solid var(--border)}
+.ob-row{display:grid;grid-template-columns:70px 1fr 60px;gap:4px;
+  padding:3px 8px;position:relative;align-items:center;font-family:var(--mono);font-size:10px}
+.ob-row.ask-row{direction:rtl} /* flip ask side right-to-left */
+.ob-row.ask-row span{direction:ltr}
+.ob-bar{position:absolute;top:0;bottom:0;opacity:0.15;border-radius:2px;transition:width 0.5s ease}
+.ob-bar.bid-bar{right:0;background:var(--green)}
+.ob-bar.ask-bar{left:0;background:var(--red)}
+.ob-price{font-weight:500;z-index:1}
+.ob-price.bid{color:var(--green)}
+.ob-price.ask{color:var(--red)}
+.ob-size{color:var(--muted);z-index:1;font-size:9px}
+.ob-total{color:var(--muted);z-index:1;font-size:9px;text-align:right}
+.ob-spread{display:flex;justify-content:center;align-items:center;
+  padding:6px;background:var(--surface2);border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  font-family:var(--mono);font-size:10px;color:var(--muted);gap:8px}
+.ob-spread-val{color:var(--gold)}
+.ob-updated{font-family:var(--mono);font-size:9px;color:var(--muted);
+  padding:6px 12px;text-align:center}
+
 /* ── NEWS ─────────────────────────────────────────────── */
 .news-list{display:flex;flex-direction:column;gap:2px}
 .news-item{display:block;background:var(--surface);border:1px solid var(--border);
@@ -205,34 +234,7 @@ body::before{content:'';position:fixed;inset:0;
   margin-top:12px;padding-top:10px;border-top:1px solid var(--border);
   line-height:1.6;letter-spacing:0.3px}
 
-/* ── CALCULATOR ──────────────────────────────────────────── */
-.calc-card{background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius);padding:18px}
-.calc-row{display:flex;gap:10px;margin-bottom:10px}
-.calc-field{flex:1;display:flex;flex-direction:column;gap:5px}
-.calc-label{font-family:var(--mono);font-size:9px;color:var(--muted);
-  letter-spacing:1.5px;text-transform:uppercase}
-.calc-input-wrap{position:relative;display:flex;align-items:center}
-.calc-prefix{position:absolute;left:10px;font-family:var(--mono);
-  font-size:13px;color:var(--muted);pointer-events:none}
-.calc-input{width:100%;background:var(--surface2);border:1px solid var(--border);
-  border-radius:8px;padding:10px 10px 10px 22px;font-family:var(--mono);
-  font-size:14px;color:var(--text);outline:none;transition:border-color .2s;
-  -webkit-appearance:none}
-.calc-input:focus{border-color:var(--gold)}
-.calc-input::placeholder{color:var(--border)}
-.calc-result{background:var(--surface2);border:1px solid var(--border);
-  border-radius:10px;padding:14px;margin-top:4px}
-.calc-result-row{display:flex;justify-content:space-between;align-items:center;
-  font-family:var(--mono);font-size:11px;padding:4px 0}
-.calc-result-row:not(:last-child){border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:4px}
-.calc-result-label{color:var(--muted);font-size:10px}
-.calc-result-val{font-size:14px;font-weight:500}
-.calc-result-val.profit{color:var(--green)}
-.calc-result-val.loss  {color:var(--red)}
-.calc-result-val.neu   {color:var(--muted)}
-.calc-hint{font-family:var(--mono);font-size:9px;color:var(--muted);
-  margin-top:8px;text-align:center;letter-spacing:0.5px}
+
 </style>
 </head>
 <body>
@@ -316,6 +318,31 @@ body::before{content:'';position:fixed;inset:0;
     </div>
   </div>
 
+  <!-- ORDER BOOK HEATMAP -->
+  <div class="section">
+    <div class="section-title">Market Depth</div>
+    <div class="ob-card">
+      <div class="ob-header">
+        <span>PRICE (USD)</span>
+        <span>SIZE (BTC)</span>
+        <span>TOTAL</span>
+      </div>
+      <!-- Spread bar -->
+      <div class="ob-spread" id="obSpread">
+        <span>Spread</span>
+        <span class="ob-spread-val" id="obSpreadVal">—</span>
+        <span id="obSpreadPct" style="color:var(--muted)"></span>
+      </div>
+      <div class="ob-body">
+        <!-- ASKS (sell orders) — shown top, red -->
+        <div class="ob-side asks" id="obAsks"></div>
+        <!-- BIDS (buy orders) — shown bottom, green -->
+        <div class="ob-side bids" id="obBids"></div>
+      </div>
+      <div class="ob-updated" id="obUpdated">Loading order book…</div>
+    </div>
+  </div>
+
   <div class="section">
     <div class="section-title">Fear &amp; Greed</div>
     <div class="fg-card">
@@ -367,41 +394,21 @@ body::before{content:'';position:fixed;inset:0;
   </div>
 
   <div class="section">
-    <div class="section-title">Profit / Loss Calculator</div>
-    <div class="calc-card">
-      <div class="calc-row">
-        <div class="calc-field">
-          <div class="calc-label">Amount Invested</div>
-          <div class="calc-input-wrap">
-            <span class="calc-prefix">$</span>
-            <input class="calc-input" id="calcInvested" type="number"
-              placeholder="1000" min="0" oninput="calcPL()">
-          </div>
-        </div>
-        <div class="calc-field">
-          <div class="calc-label">Price I Bought At</div>
-          <div class="calc-input-wrap">
-            <span class="calc-prefix">$</span>
-            <input class="calc-input" id="calcBuyPrice" type="number"
-              placeholder="60000" min="0" oninput="calcPL()">
-          </div>
+    <div class="section-title">Stock Market Sentiment</div>
+    <div class="fg-card">
+      <div class="fg-top">
+        <div class="fg-score" id="sfgScore" style="color:var(--muted)">—</div>
+        <div class="fg-right">
+          <div class="fg-label">CNN FEAR &amp; GREED</div>
+          <div class="fg-mood" id="sfgMood" style="color:var(--muted)">Loading…</div>
         </div>
       </div>
-      <div class="calc-result" id="calcResult">
-        <div class="calc-result-row">
-          <span class="calc-result-label">BTC YOU HOLD</span>
-          <span class="calc-result-val neu" id="cr-btc">—</span>
-        </div>
-        <div class="calc-result-row">
-          <span class="calc-result-label">CURRENT VALUE</span>
-          <span class="calc-result-val neu" id="cr-val">—</span>
-        </div>
-        <div class="calc-result-row">
-          <span class="calc-result-label">PROFIT / LOSS</span>
-          <span class="calc-result-val neu" id="cr-pl">—</span>
-        </div>
+      <div class="fg-track"><div class="fg-fill" id="sfgFill" style="width:0%"></div></div>
+      <div class="fg-ticks"><span>Extreme Fear</span><span>Neutral</span><span>Extreme Greed</span></div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:10px;padding-top:8px;border-top:1px solid var(--border);line-height:1.6">
+        US stock market sentiment. When stocks fear, BTC often follows.
+        Source: <a href="https://feargreedchart.com" target="_blank" style="color:var(--muted)">feargreedchart.com</a>
       </div>
-      <div class="calc-hint">Uses live BTC price · Updates automatically</div>
     </div>
   </div>
 
@@ -467,7 +474,9 @@ body::before{content:'';position:fixed;inset:0;
     <span class="badge">PRICE · COINBASE</span>
     <span class="badge">STATS · COINLORE</span>
     <span class="badge">CHART · COINBASE CANDLES</span>
-    <span class="badge">FNG · ALTERNATIVE.ME</span>
+    <span class="badge">ORDER BOOK · COINBASE L2</span>
+    <span class="badge">CRYPTO FNG · ALTERNATIVE.ME</span>
+    <span class="badge">STOCK FNG · FEARGREEDCHART.COM</span>
     <span class="badge">NEWS · GOOGLE NEWS + RSS2JSON</span>
   </div>
 
@@ -834,32 +843,35 @@ function renderSignal(fg) {
   $('sf-score').className   = `sf-val ${scoreClass}`;
 }
 
-// ─── P&L CALCULATOR ───────────────────────────────────────
-function calcPL() {
-  const invested  = parseFloat($('calcInvested').value);
-  const buyPrice  = parseFloat($('calcBuyPrice').value);
-  const livePrice = stale.price ? stale.price.price : null;
+// ─── STOCK MARKET FEAR & GREED ────────────────────────────
+// feargreedchart.com — free, no key, CORS enabled ✅
+const STOCK_FG_URL = 'https://feargreedchart.com/api/current';
+let stockFgTimer   = null;
 
-  if (!invested || !buyPrice || buyPrice <= 0 || !livePrice) {
-    $('cr-btc').textContent = '—'; $('cr-btc').className = 'calc-result-val neu';
-    $('cr-val').textContent = '—'; $('cr-val').className = 'calc-result-val neu';
-    $('cr-pl').textContent  = '—'; $('cr-pl').className  = 'calc-result-val neu';
+async function getStockFG() {
+  try {
+    const res = await fetch(STOCK_FG_URL);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch { return null; }
+}
+
+function renderStockFG(data) {
+  if (!data) {
+    $('sfgMood').textContent = 'Unavailable';
     return;
   }
+  // feargreedchart.com returns { score, label, ... }
+  const val  = data.score ?? data.value ?? data.rating ?? null;
+  const mood = data.label ?? data.classification ?? data.description ?? '—';
+  if (val === null) { $('sfgMood').textContent = 'Unavailable'; return; }
 
-  const btcHeld    = invested / buyPrice;
-  const currentVal = btcHeld * livePrice;
-  const pl         = currentVal - invested;
-  const plPct      = (pl / invested) * 100;
-  const plClass    = pl > 0 ? 'profit' : pl < 0 ? 'loss' : 'neu';
-  const plSign     = pl >= 0 ? '+' : '';
-
-  $('cr-btc').textContent = btcHeld.toFixed(6) + ' BTC';
-  $('cr-btc').className   = 'calc-result-val neu';
-  $('cr-val').textContent = fUSD(currentVal, 2);
-  $('cr-val').className   = `calc-result-val ${plClass}`;
-  $('cr-pl').textContent  = `${plSign}${fUSD(pl, 2)} (${plSign}${plPct.toFixed(2)}%)`;
-  $('cr-pl').className    = `calc-result-val ${plClass}`;
+  const col = fgCol(parseInt(val));
+  $('sfgScore').textContent = Math.round(val);
+  $('sfgScore').style.color = col;
+  $('sfgMood').textContent  = String(mood).toUpperCase();
+  $('sfgMood').style.color  = col;
+  $('sfgFill').style.width  = Math.round(val) + '%';
 }
 
 // ─── MAIN REFRESH ─────────────────────────────────────────
@@ -910,14 +922,103 @@ async function refreshAll() {
     const fg = await getFG();
     if (fg) stale.fg = fg;
     renderFG(fg || stale.fg);
-    renderSignal(fg || stale.fg);  } catch(e) {
+    renderSignal(fg || stale.fg);
+  } catch(e) {
     console.error('FG error:', e);
     if (stale.fg) { renderFG(stale.fg); renderSignal(stale.fg); }
     else $('fgMood').textContent = 'Unavailable';
   }
 
+  // 5. Stock Market Fear & Greed — independent
+  try {
+    const sfg = await getStockFG();
+    renderStockFG(sfg);
+  } catch(e) {
+    console.warn('Stock FG error:', e);
+    $('sfgMood').textContent = 'Unavailable';
+  }
+
   btn.disabled = false;
   btn.textContent = '↻  REFRESH DATA';
+}
+
+// ─── ORDER BOOK HEATMAP ───────────────────────────────────
+// Coinbase level2 order book — open CORS, no key needed ✅
+const OB_URL     = 'https://api.exchange.coinbase.com/products/BTC-USD/book?level=2';
+const OB_ROWS    = 15; // show top 15 bids and 15 asks
+const OB_REFRESH = 30_000; // refresh every 30 seconds
+let obTimer      = null;
+
+async function fetchOrderBook() {
+  const res = await fetch(OB_URL);
+  if (!res.ok) throw new Error(`Order book ${res.status}`);
+  return res.json();
+}
+
+function renderOrderBook(data) {
+  // data.bids = [["price","size",orders], ...] highest bid first
+  // data.asks = [["price","size",orders], ...] lowest ask first
+  const bids = data.bids.slice(0, OB_ROWS).map(r => ({
+    price: parseFloat(r[0]),
+    size:  parseFloat(r[1]),
+  }));
+  const asks = data.asks.slice(0, OB_ROWS).map(r => ({
+    price: parseFloat(r[0]),
+    size:  parseFloat(r[1]),
+  }));
+
+  // Calculate cumulative totals
+  let bidTotal = 0, askTotal = 0;
+  bids.forEach(r => { bidTotal += r.size; r.total = bidTotal; });
+  asks.forEach(r => { askTotal += r.size; r.total = askTotal; });
+
+  const maxTotal = Math.max(bidTotal, askTotal);
+
+  // Spread
+  const bestBid   = bids[0]?.price || 0;
+  const bestAsk   = asks[0]?.price || 0;
+  const spread    = bestAsk - bestBid;
+  const spreadPct = bestBid ? ((spread / bestBid) * 100).toFixed(3) : '—';
+  $('obSpreadVal').textContent = '$' + spread.toFixed(2);
+  $('obSpreadPct').textContent = `(${spreadPct}%)`;
+
+  // Render asks — reversed so closest to price is at top of its column
+  const asksEl = $('obAsks');
+  asksEl.innerHTML = [...asks].reverse().map(r => {
+    const pct = (r.total / maxTotal * 100).toFixed(1);
+    return `
+      <div class="ob-row ask-row">
+        <div class="ob-bar ask-bar" style="width:${pct}%"></div>
+        <span class="ob-price ask">$${r.price.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0})}</span>
+        <span class="ob-size">${r.size.toFixed(3)}</span>
+        <span class="ob-total">${r.total.toFixed(2)}</span>
+      </div>`;
+  }).join('');
+
+  // Render bids — highest bid at top
+  const bidsEl = $('obBids');
+  bidsEl.innerHTML = bids.map(r => {
+    const pct = (r.total / maxTotal * 100).toFixed(1);
+    return `
+      <div class="ob-row">
+        <div class="ob-bar bid-bar" style="width:${pct}%"></div>
+        <span class="ob-price bid">$${r.price.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0})}</span>
+        <span class="ob-size">${r.size.toFixed(3)}</span>
+        <span class="ob-total">${r.total.toFixed(2)}</span>
+      </div>`;
+  }).join('');
+
+  $('obUpdated').textContent = `Order book · ${nowStr()} · Refreshes every 30s`;
+}
+
+async function refreshOrderBook() {
+  try {
+    const data = await fetchOrderBook();
+    renderOrderBook(data);
+  } catch(e) {
+    console.warn('Order book error:', e.message);
+    $('obUpdated').textContent = '⚠ Order book unavailable — will retry';
+  }
 }
 
 // ─── HALVING COUNTDOWN ────────────────────────────────────
@@ -1077,6 +1178,12 @@ async function refreshNews() {
 refreshAll();
 refreshTimer = setInterval(refreshAll, REFRESH_MS);
 
+// Order book — delayed 2s, then every 30s
+setTimeout(() => {
+  refreshOrderBook();
+  obTimer = setInterval(refreshOrderBook, OB_REFRESH);
+}, 2000);
+
 // News on its own 10-minute cycle — delayed 5s so price loads first
 setTimeout(() => {
   refreshNews();
@@ -1087,9 +1194,12 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     clearInterval(refreshTimer);
     clearInterval(newsTimer);
+    clearInterval(obTimer);
   } else {
-    refreshAll(false);
+    refreshAll();
     refreshTimer = setInterval(refreshAll, REFRESH_MS);
+    refreshOrderBook();
+    obTimer = setInterval(refreshOrderBook, OB_REFRESH);
     if (Date.now() - lastNewsTs > 5 * 60 * 1000) refreshNews();
     newsTimer = setInterval(refreshNews, NEWS_REFRESH);
   }
