@@ -907,11 +907,28 @@ function renderSignal(fg) {
 
   if (fgVal === null) return;
 
-  // ── Factor 1: Fear & Greed
+  // ── Factor 1: Fear & Greed — use Alternative.me's own classification,
+  // the same string the main Fear & Greed panel displays.
+  // (Previous bug: this used its own thresholds — ≤30 fearful, ≤55 neutral —
+  // so a value of 34 showed as FEAR in the main panel but Neutral here.)
   let fgScore = 0, fgLabel = '', fgClass = 'mid';
-  if (fgVal <= 30)      { fgScore = +1; fgLabel = `${fgVal} — Fearful (buy zone)`;    fgClass = 'good'; }
-  else if (fgVal <= 55) { fgScore =  0; fgLabel = `${fgVal} — Neutral`;               fgClass = 'mid';  }
-  else                  { fgScore = -1; fgLabel = `${fgVal} — Greedy (be cautious)`;  fgClass = 'bad';  }
+  const fgWordRaw = fg && fg.value_classification ? fg.value_classification : '';
+  const fgWordLower = fgWordRaw.toLowerCase();
+  if (fgWordLower.includes('fear')) {
+    fgScore = +1; fgClass = 'good';
+    fgLabel = `${fgVal} — ${fgWordRaw} (buy zone)`;
+  } else if (fgWordLower.includes('greed')) {
+    fgScore = -1; fgClass = 'bad';
+    fgLabel = `${fgVal} — ${fgWordRaw} (be cautious)`;
+  } else if (fgWordLower.includes('neutral')) {
+    fgScore = 0; fgClass = 'mid';
+    fgLabel = `${fgVal} — ${fgWordRaw}`;
+  } else {
+    // Fallback if the API ever returns no classification: Alternative.me bands.
+    if (fgVal <= 44)      { fgScore = +1; fgClass = 'good'; fgLabel = `${fgVal} — Fear (buy zone)`; }
+    else if (fgVal <= 55) { fgScore =  0; fgClass = 'mid';  fgLabel = `${fgVal} — Neutral`; }
+    else                  { fgScore = -1; fgClass = 'bad';  fgLabel = `${fgVal} — Greed (be cautious)`; }
+  }
 
   // ── Factor 2: 24H price move (from CoinLore stats)
   let chgScore = 0, chgLabel = '', chgClass = 'mid';
