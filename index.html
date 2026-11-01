@@ -225,6 +225,93 @@ body::before{content:'';position:fixed;inset:0;
   line-height:1.6;letter-spacing:0.3px}
 
 
+
+/* ── VIEW NAV ─────────────────────────────────────────── */
+.view-nav{display:flex;gap:6px;padding:12px 20px 0;overflow-x:auto}
+.view-nav a{font-family:var(--mono);font-size:11px;padding:6px 13px;border-radius:6px;
+  border:1px solid var(--border);background:transparent;color:var(--muted);
+  text-decoration:none;white-space:nowrap}
+.view-nav a:hover{color:var(--gold);border-color:var(--gold)}
+
+/* ── BTC STOCKS STRIP ─────────────────────────────────── */
+.stock-strip{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
+.stock-card{min-width:152px;flex:0 0 auto;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:12px;cursor:pointer}
+.stock-card:hover{border-color:var(--gold)}
+.sc-ticker{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text)}
+.sc-role{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+.sc-price{font-family:var(--mono);font-size:16px;color:var(--text);margin-top:8px}
+.sc-chg{font-family:var(--mono);font-size:11px;margin-top:3px}
+.sc-vs{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px}
+.stocks-note{font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:8px;line-height:1.6}
+
+/* ── COMPARE CHART ────────────────────────────────────── */
+.compare-toggle{display:flex;gap:6px;margin-bottom:10px}
+.compare-btn{font-family:var(--mono);font-size:11px;padding:5px 13px;border-radius:6px;
+  border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer}
+.compare-btn.active{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
+.compare-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.compare-chip{font-family:var(--mono);font-size:11px;padding:5px 11px;border-radius:20px;
+  border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer}
+.compare-chip.active{border-color:var(--gold);color:var(--gold);background:var(--gold-dim)}
+#compareChart{display:none;width:100%!important;height:100%!important}
+#compareMsg{display:none}
+
+/* ── COMPANIES ────────────────────────────────────────── */
+.company-grid{display:flex;flex-direction:column;gap:10px}
+.company-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.company-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.company-name{font-family:var(--body);font-size:14px;font-weight:500}
+.company-role{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:3px}
+.company-price{font-family:var(--mono);font-size:18px;text-align:right}
+.company-chg{font-family:var(--mono);font-size:11px;text-align:right;margin-top:3px}
+.company-note{font-family:var(--body);font-size:12px;color:var(--muted);line-height:1.5;margin-top:10px}
+.company-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+.company-stat{background:var(--surface2);border-radius:8px;padding:9px 10px}
+.company-stat-label{font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.company-stat-val{font-family:var(--mono);font-size:12px;margin-top:4px}
+.company-news-btn{font-family:var(--mono);font-size:11px;color:var(--gold);background:var(--gold-dim);
+  border:1px solid var(--gold);border-radius:6px;padding:8px 12px;cursor:pointer;margin-top:12px}
+.company-news{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.company-news a{font-family:var(--body);font-size:12px;color:var(--text);text-decoration:none;
+  background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;line-height:1.45}
+.company-news a:hover{border-color:var(--gold)}
+
+/* ── NEWS FILTERS ─────────────────────────────────────── */
+.news-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.news-filter-btn{font-family:var(--mono);font-size:11px;padding:5px 12px;border-radius:20px;
+  border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer}
+.news-filter-btn.active{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
+
+/* ── DESKTOP — phone layout below 768px is untouched ──── */
+@media (min-width:768px){
+  .app{max-width:1080px}
+  .header{padding:22px 32px 16px}
+  .view-nav{padding:12px 32px 0}
+  .price-hero{padding:36px 32px 24px}
+  .price-main{font-size:84px}
+  .stats-grid{grid-template-columns:repeat(4,1fr);padding:0 32px}
+  .section{padding:0 32px}
+  .desk-row{display:grid;gap:14px;padding:0 32px;margin-bottom:14px}
+  .desk-row .section{padding:0;margin-bottom:0}
+  .row-chart{grid-template-columns:2fr 1fr}
+  .row-heat{grid-template-columns:1.6fr 1fr}
+  .row-signal{grid-template-columns:1fr 1fr}
+  .chart-wrap{height:320px}
+  .hm-wrap{height:300px}
+  .stock-strip{display:grid;grid-template-columns:repeat(4,1fr);overflow:visible}
+  .stock-card{min-width:0}
+  .company-grid{display:grid;grid-template-columns:1fr 1fr}
+  .news-list{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .badges{padding:0 32px}
+  .refresh-btn{margin:0 32px;width:calc(100% - 64px)}
+}
+@media (min-width:1200px){
+  .app{max-width:1240px}
+  .news-list{grid-template-columns:1fr 1fr 1fr}
+  .chart-wrap{height:360px}
+}
+
 </style>
 </head>
 <body>
@@ -240,6 +327,13 @@ body::before{content:'';position:fixed;inset:0;
     </div>
     <div class="live-badge"><div class="live-dot"></div>LIVE</div>
   </header>
+
+  <nav class="view-nav">
+    <a href="#top">BTC Overview</a>
+    <a href="#stocksSection">BTC Stocks</a>
+    <a href="#companiesSection">Companies</a>
+    <a href="#newsSection">News</a>
+  </nav>
 
   <div class="price-hero">
     <div class="price-label">BITCOIN / USD</div>
@@ -272,6 +366,14 @@ body::before{content:'';position:fixed;inset:0;
     </div>
   </div>
 
+  <!-- BTC STOCKS STRIP -->
+  <div class="section" id="stocksSection">
+    <div class="section-title">BTC Stocks <a href="#companiesSection" style="font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--gold);text-decoration:none">SEE ALL &rarr;</a></div>
+    <div class="stock-strip" id="stockStrip"><div class="news-loading">Loading stocks…</div></div>
+    <div class="stocks-note">Stocks trade Mon–Fri. BTC trades 24/7. Day % is the last regular session. <span id="stocksSource">Delayed daily closes · snapshot Oct 30, 2026.</span></div>
+  </div>
+
+  <div class="desk-row row-chart">
   <!-- CHART -->
   <div class="section">
     <div class="section-title">Price Chart</div>
@@ -283,10 +385,18 @@ body::before{content:'';position:fixed;inset:0;
       <button class="time-tab"        data-limit="120" onclick="switchTab(this)">120D</button>
       <button class="time-tab"        data-limit="365" onclick="switchTab(this)">1Y</button>
     </div>
+    <div class="compare-toggle">
+      <button class="compare-btn active" id="btnBtcChart" onclick="setCompareMode(false)">BTC candles</button>
+      <button class="compare-btn" id="btnCompareChart" onclick="setCompareMode(true)">Compare vs stocks</button>
+    </div>
+    <div class="compare-chips" id="compareChips" style="display:none"></div>
     <div class="chart-wrap">
       <div class="chart-msg" id="chartMsg">Loading chart…</div>
+      <div class="chart-msg" id="compareMsg">Loading compare…</div>
       <canvas id="priceChart"></canvas>
+      <canvas id="compareChart"></canvas>
     </div>
+    <div class="stocks-note" id="compareNote" style="display:none">Rebased to 100 at the start of the period · stock trading days only · BTC weekend moves appear at the next trading day.</div>
   </div>
 
   <!-- MARKET INFO -->
@@ -309,6 +419,16 @@ body::before{content:'';position:fixed;inset:0;
   </div>
 
 
+  </div>
+
+  <!-- COMPANIES -->
+  <div class="section" id="companiesSection">
+    <div class="section-title">BTC Companies</div>
+    <div class="company-grid" id="companyGrid"><div class="news-loading">Loading companies…</div></div>
+    <div class="news-updated" id="stocksUpdated"></div>
+  </div>
+
+  <div class="desk-row row-heat">
   <!-- LIVE HEATMAP -->
   <div class="section">
     <div class="section-title">Liquidity Heatmap <span style="font-size:10px;letter-spacing:1px;color:var(--muted)">(LIVE · BUILDS OVER TIME)</span></div>
@@ -351,6 +471,9 @@ body::before{content:'';position:fixed;inset:0;
     </div>
   </div>
 
+  </div>
+
+  <div class="desk-row row-signal">
   <div class="section">
     <div class="section-title">Good Time to Buy?</div>
     <div class="signal-card">
@@ -431,8 +554,19 @@ body::before{content:'';position:fixed;inset:0;
     </div>
   </div>
 
-  <div class="section">
+  </div>
+
+  <div class="section" id="newsSection">
     <div class="section-title">Latest News</div>
+    <div class="news-filters" id="newsFilters">
+      <button class="news-filter-btn active" data-filter="all" onclick="setNewsFilter('all',this)">All</button>
+      <button class="news-filter-btn" data-filter="btc" onclick="setNewsFilter('btc',this)">BTC</button>
+      <button class="news-filter-btn" data-filter="MSTR" onclick="setNewsFilter('MSTR',this)">MSTR</button>
+      <button class="news-filter-btn" data-filter="COIN" onclick="setNewsFilter('COIN',this)">COIN</button>
+      <button class="news-filter-btn" data-filter="MARA" onclick="setNewsFilter('MARA',this)">MARA</button>
+      <button class="news-filter-btn" data-filter="RIOT" onclick="setNewsFilter('RIOT',this)">RIOT</button>
+      <button class="news-filter-btn" data-filter="miners" onclick="setNewsFilter('miners',this)">Miners</button>
+    </div>
     <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
       <span class="news-tag institutional">🏦 INSTITUTIONAL</span>
       <span class="news-tag regulatory">⚖️ REGULATION</span>
@@ -451,6 +585,7 @@ body::before{content:'';position:fixed;inset:0;
     <span class="badge">HEATMAP · COINBASE WEBSOCKET</span>
     <span class="badge">FNG · ALTERNATIVE.ME</span>
     <span class="badge">NEWS · GOOGLE NEWS + RSS2JSON</span>
+    <span class="badge">STOCKS · DELAYED DAILY CLOSES</span>
   </div>
 
   <button class="refresh-btn" id="refreshBtn" onclick="refreshAll()">↻ &nbsp;REFRESH DATA</button>
@@ -460,7 +595,7 @@ body::before{content:'';position:fixed;inset:0;
     Stats via <a href="https://coinlore.com" target="_blank">CoinLore</a><br>
     Sentiment via <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank">Alternative.me</a> ·
     News via <a href="https://news.google.com" target="_blank">Google News</a> + <a href="https://rss2json.com" target="_blank">rss2json</a><br>
-    No API key · No proxy · Works everywhere<br><br>
+    BTC: No API key · No proxy · Stocks: delayed daily closes<br><br>
     <span style="color:var(--gold);letter-spacing:2px">BTC LIVE · BUILT BY SBB</span>
   </div>
 
@@ -599,6 +734,7 @@ function renderStats(coin) {
   const badge = $('priceChange');
   badge.textContent = `${arrow(chg24)} ${Math.abs(chg24).toFixed(2)}%`;
   badge.className = 'price-change ' + (chg24 > 0 ? 'up' : chg24 < 0 ? 'down' : 'neu');
+  if (typeof updateStocksVsBtc === 'function') updateStocksVsBtc();
 }
 
 // ─── RENDER CHART ─────────────────────────────────────────
@@ -714,6 +850,7 @@ async function switchTab(btn) {
   activeLimit = parseInt(key);
   document.querySelectorAll('.time-tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
+  if (typeof compareMode !== 'undefined' && compareMode) { renderCompare(); return; }
 
   $('chartMsg').textContent = 'Loading chart…';
   $('chartMsg').style.display = 'flex';
@@ -1261,6 +1398,7 @@ function renderNews(articles) {
 async function refreshNews() {
   try {
     const articles = await fetchNews();
+    newsCache.btc = articles;
     renderNews(articles);
   } catch(e) {
     console.error('News error:', e);
@@ -1268,7 +1406,220 @@ async function refreshNews() {
   }
 }
 
+
+// ─── BTC STOCKS ─────────────────────────────────────────
+// Delayed daily closes. Primary file: data/stocks.json (snapshot Oct 30, 2026,
+// 260 trading days per ticker). Live Stooq daily CSV is tried as an update;
+// if it fails, the snapshot stays and is labelled as such. No key in browser.
+const STOCK_ORDER = ['MSTR','COIN','MARA','RIOT'];
+const STOCK_FALLBACK = {
+  MSTR:{name:'Strategy',role:'Bitcoin treasury',btcHeld:848517,btcAsOf:'2026-10-25',note:'Largest corporate BTC holder. Watch: BTC per share and premium to BTC value.',price:130.51,prevClose:141.62,changePct:-7.84,daily:[]},
+  COIN:{name:'Coinbase Global',role:'Crypto exchange',btcHeld:17954,btcAsOf:'2026-09-30',note:'Exchange proxy, not a pure treasury play. BTC is small next to its whole business.',price:143.54,prevClose:160.59,changePct:-10.62,daily:[]},
+  MARA:{name:'MARA Holdings',role:'Bitcoin miner',btcHeld:35577,btcAsOf:'2026-06-30',note:'Miner + treasury. Moves with BTC and with mining economics.',price:6.77,prevClose:7.165,changePct:-5.51,daily:[]},
+  RIOT:{name:'Riot Platforms',role:'Bitcoin miner',btcHeld:11380,btcAsOf:'2026-06-30',note:'Miner + treasury. Moves with BTC and with mining economics.',price:12.81,prevClose:13.74,changePct:-6.77,daily:[]},
+};
+let stockData = null; // {asOf, tickers:{sym:{...daily:[[date,close]]}}}
+let compareMode = false;
+let compareChartInst = null;
+let compareSelected = new Set(['MSTR','COIN']);
+let btcDailyCache = null;
+let newsCache = {};
+const NEWS_QUERIES = {MSTR:'Strategy MSTR bitcoin', COIN:'Coinbase bitcoin', MARA:'MARA Holdings bitcoin', RIOT:'Riot Platforms bitcoin', miners:'bitcoin mining MARA RIOT'};
+const COMP_COLORS = {MSTR:'#4da6ff', COIN:'#c084fc', MARA:'#ffaa00', RIOT:'#ff4545'};
+
+function stockTickers(){
+  if (stockData && stockData.tickers) return stockData.tickers;
+  return STOCK_FALLBACK;
+}
+function pctColor(v){ return v >= 0 ? 'var(--green)' : 'var(--red)'; }
+function pctText(v){ return (v >= 0 ? '▲ +' : '▼ ') + Math.abs(v).toFixed(2) + '%'; }
+function returnForDays(daily, days){
+  if (!daily || daily.length < 2) return null;
+  const last = daily[daily.length-1];
+  const lastDate = new Date(last[0] + 'T00:00:00Z');
+  const target = new Date(lastDate.getTime() - days*86400000);
+  let base = daily[0];
+  for (const d of daily){ if (new Date(d[0] + 'T00:00:00Z') <= target) base = d; else break; }
+  return ((last[1] / base[1]) - 1) * 100;
+}
+function renderStockStrip(){
+  const t = stockTickers();
+  $('stockStrip').innerHTML = STOCK_ORDER.map(sym => {
+    const s = t[sym]; if (!s) return '';
+    return `<div class="stock-card" onclick="document.getElementById('companiesSection').scrollIntoView({behavior:'smooth'})">
+      <div class="sc-ticker">${sym}</div><div class="sc-role">${s.role}</div>
+      <div class="sc-price">${fUSD(s.price, s.price < 20 ? 2 : 2)}</div>
+      <div class="sc-chg" style="color:${pctColor(s.changePct)}">${pctText(s.changePct)}</div>
+      <div class="sc-vs" data-vs="${sym}">vs BTC —</div></div>`;
+  }).join('');
+  updateStocksVsBtc();
+}
+function updateStocksVsBtc(){
+  if (!stale.stats) return;
+  const btc = parseFloat(stale.stats.percent_change_24h);
+  const t = stockTickers();
+  document.querySelectorAll('[data-vs]').forEach(el => {
+    const s = t[el.dataset.vs]; if (!s) return;
+    const vs = s.changePct - btc;
+    el.textContent = 'vs BTC ' + (vs >= 0 ? '+' : '') + vs.toFixed(2) + '%';
+    el.style.color = pctColor(vs);
+  });
+}
+function renderCompanies(){
+  const t = stockTickers();
+  $('companyGrid').innerHTML = STOCK_ORDER.map(sym => {
+    const s = t[sym]; if (!s) return '';
+    const r30 = returnForDays(s.daily, 30), r1y = returnForDays(s.daily, 365);
+    return `<div class="company-card">
+      <div class="company-top"><div><div class="company-name">${s.name} (${sym})</div>
+      <div class="company-role">${s.role} · ${s.btcHeld.toLocaleString('en-US')} BTC held · as of ${s.btcAsOf}</div></div>
+      <div><div class="company-price">${fUSD(s.price,2)}</div>
+      <div class="company-chg" style="color:${pctColor(s.changePct)}">${pctText(s.changePct)} today</div></div></div>
+      <div class="company-note">${s.note}</div>
+      <div class="company-stats">
+        <div class="company-stat"><div class="company-stat-label">30D</div><div class="company-stat-val" style="color:${r30===null?'var(--muted)':pctColor(r30)}">${r30===null?'—':pctText(r30)}</div></div>
+        <div class="company-stat"><div class="company-stat-label">1Y</div><div class="company-stat-val" style="color:${r1y===null?'var(--muted)':pctColor(r1y)}">${r1y===null?'—':pctText(r1y)}</div></div>
+        <div class="company-stat"><div class="company-stat-label">BTC held</div><div class="company-stat-val">${s.btcHeld.toLocaleString('en-US')}</div></div>
+      </div>
+      <button class="company-news-btn" onclick="loadCompanyNews('${sym}',this)">Load ${sym} headlines</button>
+      <div class="company-news" id="news-${sym}"></div></div>`;
+  }).join('');
+  $('stocksUpdated').textContent = 'Stocks · snapshot ' + (stockData ? stockData.asOf : 'Oct 30, 2026') + ' · holdings are filing dates, not live';
+}
+async function loadStocks(){
+  try {
+    const res = await fetch('data/stocks.json');
+    if (res.ok){ const j = await res.json(); if (j.tickers) stockData = j; }
+  } catch(e){ console.warn('stocks.json unavailable, using fallback', e); }
+  renderStockStrip(); renderCompanies(); renderCompareChips();
+  refreshStocksLive();
+}
+function renderCompareChips(){
+  $('compareChips').innerHTML = STOCK_ORDER.map(sym =>
+    `<button class="compare-chip ${compareSelected.has(sym)?'active':''}" onclick="toggleCompareTicker('${sym}',this)">${sym}</button>`).join('');
+}
+function toggleCompareTicker(sym, btn){
+  if (compareSelected.has(sym)) compareSelected.delete(sym); else compareSelected.add(sym);
+  btn.classList.toggle('active'); renderCompare();
+}
+async function refreshStocksLive(){
+  // Stooq daily CSV, no key. Best-effort only: any failure keeps the snapshot.
+  try {
+    const results = await Promise.allSettled(STOCK_ORDER.map(async sym => {
+      const ctl = new AbortController(); setTimeout(() => ctl.abort(), 7000);
+      const res = await fetch(`https://stooq.com/q/d/l/?s=${sym.toLowerCase()}.us&i=d`, {signal: ctl.signal});
+      if (!res.ok) throw new Error('Stooq ' + res.status);
+      const txt = await res.text();
+      const lines = txt.trim().split('\n').slice(1).filter(l => l.includes(','));
+      const rows = lines.map(l => { const p = l.split(','); return [p[0], parseFloat(p[4])]; }).filter(r => !isNaN(r[1]));
+      return {sym, rows};
+    }));
+    let updated = false;
+    const t = stockTickers();
+    results.forEach(r => {
+      if (r.status !== 'fulfilled') return;
+      const rows = r.value.rows; if (rows.length < 2) return;
+      const last = rows[rows.length-1], prev = rows[rows.length-2];
+      const s = t[r.value.sym]; if (!s) return;
+      if (stockData && stockData.asOf && last[0] <= stockData.asOf) return;
+      s.price = last[1]; s.changePct = ((last[1]/prev[1])-1)*100; s.prevClose = prev[1];
+      if (s.daily && s.daily.length){ if (s.daily[s.daily.length-1][0] !== last[0]) s.daily.push(last); }
+      updated = true;
+    });
+    if (updated){
+      const dates = STOCK_ORDER.map(sym => t[sym].daily && t[sym].daily.length ? t[sym].daily[t[sym].daily.length-1][0] : null).filter(Boolean);
+      const asOf = dates.sort().pop();
+      $('stocksSource').textContent = 'Daily closes updated via Stooq · as of ' + asOf + '.';
+      $('stocksUpdated').textContent = 'Stocks · updated via Stooq · as of ' + asOf + ' · holdings are filing dates, not live';
+      renderStockStrip(); renderCompanies(); if (compareMode) renderCompare();
+    }
+  } catch(e){ console.warn('Stooq update failed, keeping snapshot', e); }
+}
+function setCompareMode(on){
+  compareMode = on;
+  $('btnBtcChart').classList.toggle('active', !on);
+  $('btnCompareChart').classList.toggle('active', on);
+  $('compareChips').style.display = on ? 'flex' : 'none';
+  $('compareNote').style.display = on ? 'block' : 'none';
+  if (on){ $('priceChart').style.display = 'none'; $('chartMsg').style.display = 'none'; renderCompare(); }
+  else {
+    $('compareChart').style.display = 'none'; $('compareMsg').style.display = 'none';
+    const activeTab = document.querySelector('.time-tab.active'); if (activeTab) switchTab(activeTab);
+  }
+}
+async function renderCompare(){
+  if (!compareMode) return;
+  const t = stockTickers();
+  const baseSym = 'MSTR'; const base = t[baseSym] && t[baseSym].daily;
+  if (!base || !base.length){ $('compareMsg').textContent = 'Compare history unavailable in this snapshot.'; $('compareMsg').style.display = 'flex'; return; }
+  $('compareMsg').textContent = 'Loading compare…'; $('compareMsg').style.display = 'flex';
+  try {
+    if (!btcDailyCache) btcDailyCache = await fetchCandles(86400, 300);
+    const btcSeries = btcDailyCache.map(c => [new Date(c[0]*1000).toISOString().slice(0,10), c[4]]).sort((a,b) => a[0] < b[0] ? -1 : 1);
+    const period = activeLimit === 1 ? 30 : activeLimit;
+    const lastDate = new Date(base[base.length-1][0] + 'T00:00:00Z');
+    const cutoff = new Date(lastDate.getTime() - period*86400000);
+    const labels = base.filter(d => new Date(d[0] + 'T00:00:00Z') >= cutoff).map(d => d[0]);
+    if (labels.length < 2) throw new Error('Not enough points');
+    const closeOnOrBefore = (series, date) => {
+      let v = null; for (const d of series){ if (d[0] <= date) v = d[1]; else break; } return v;
+    };
+    const rebase = (vals) => { const first = vals[0]; return vals.map(v => v === null ? null : (v/first)*100); };
+    const btcVals = labels.map(d => closeOnOrBefore(btcSeries, d));
+    const datasets = [{label:'BTC', data: rebase(btcVals), borderColor:'#f7931a', borderWidth:3, pointRadius:0, tension:0.1}];
+    compareSelected.forEach(sym => {
+      const s = t[sym]; if (!s || !s.daily || !s.daily.length) return;
+      const vals = labels.map(d => closeOnOrBefore(s.daily, d));
+      datasets.push({label:sym, data: rebase(vals), borderColor:COMP_COLORS[sym]||'#e8edf5', borderWidth:2, pointRadius:0, tension:0.1});
+    });
+    $('compareMsg').style.display = 'none';
+    const canvas = $('compareChart'); canvas.style.display = 'block';
+    if (compareChartInst) compareChartInst.destroy();
+    compareChartInst = new Chart(canvas, {type:'line', data:{labels, datasets},
+      options:{responsive:true, maintainAspectRatio:false, animation:{duration:500},
+        plugins:{legend:{labels:{color:'#e8edf5', font:{family:'Share Tech Mono', size:10}, boxWidth:12}},
+          tooltip:{backgroundColor:'#0e1420', borderColor:'#1e2d45', titleColor:'#4e6a88', bodyColor:'#e8edf5',
+            titleFont:{family:'Share Tech Mono', size:10}, bodyFont:{family:'Share Tech Mono', size:11},
+            callbacks:{label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)} (${(ctx.parsed.y-100).toFixed(1)}%)`}}},
+        scales:{x:{ticks:{color:'#4e6a88', font:{family:'Share Tech Mono', size:9}, maxTicksLimit:6, maxRotation:0}, grid:{color:'rgba(30,45,69,0.4)'}, border:{display:false}},
+          y:{ticks:{color:'#4e6a88', font:{family:'Share Tech Mono', size:9}, callback: v => v.toFixed(0)}, grid:{color:'rgba(30,45,69,0.4)'}, border:{display:false}}}}});
+  } catch(e){
+    console.error('Compare error:', e);
+    $('compareMsg').textContent = '⚠ Compare unavailable — tap Refresh to retry'; $('compareMsg').style.display = 'flex';
+  }
+}
+// ─── NEWS FILTERS + COMPANY NEWS ──────────────────────────
+async function fetchNewsForQuery(q){
+  const rss = `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=en-US&gl=US&ceid=US:en`;
+  const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rss)}`);
+  if (!res.ok) throw new Error('rss2json ' + res.status);
+  const j = await res.json(); if (j.status !== 'ok') throw new Error('rss2json error');
+  return j.items.slice(0, 8).map(item => ({title:item.title||'', link:item.link||'#', source:item.author || new URL(item.link).hostname.replace('www.','') || 'News', pubDate:item.pubDate||''}));
+}
+async function setNewsFilter(filter, btn){
+  document.querySelectorAll('.news-filter-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
+  if (filter === 'all' || filter === 'btc'){
+    if (newsCache.btc) renderNews(newsCache.btc); else refreshNews();
+    return;
+  }
+  if (newsCache[filter]){ renderNews(newsCache[filter]); return; }
+  $('newsList').innerHTML = '<div class="news-loading">Loading news…</div>';
+  try { const a = await fetchNewsForQuery(NEWS_QUERIES[filter]); newsCache[filter] = a; renderNews(a); }
+  catch(e){ console.error('Company news error:', e); $('newsList').innerHTML = '<div class="news-loading">⚠ News unavailable — will retry</div>'; }
+}
+async function loadCompanyNews(sym, btn){
+  btn.disabled = true; btn.textContent = 'Loading…';
+  const box = $('news-' + sym);
+  try {
+    const a = await fetchNewsForQuery(NEWS_QUERIES[sym]);
+    box.innerHTML = a.slice(0,3).map(x => `<a href="${x.link}" target="_blank" rel="noopener">${x.title}<br><span style="font-family:var(--mono);font-size:9px;color:var(--muted)">${x.source} · ${x.pubDate ? timeAgo(x.pubDate) : ''}</span></a>`).join('');
+    btn.textContent = 'Headlines loaded';
+  } catch(e){ box.innerHTML = '<div class="news-loading">⚠ Headlines unavailable — try again later</div>'; btn.disabled = false; btn.textContent = 'Load ' + sym + ' headlines'; }
+}
+
+
 // ─── BOOT ─────────────────────────────────────────────────
+loadStocks();
 refreshAll();
 refreshTimer = setInterval(refreshAll, REFRESH_MS);
 
