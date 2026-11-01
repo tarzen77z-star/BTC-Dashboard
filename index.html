@@ -1589,12 +1589,23 @@ async function renderCompare(){
   }
 }
 // ─── NEWS FILTERS + COMPANY NEWS ──────────────────────────
+function newsSource(item){
+  if (item.author) return item.author;
+  try { return new URL(item.link).hostname.replace('www.',''); } catch(e){ return 'News'; }
+}
 async function fetchNewsForQuery(q){
   const rss = `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=en-US&gl=US&ceid=US:en`;
-  const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rss)}`);
-  if (!res.ok) throw new Error('rss2json ' + res.status);
-  const j = await res.json(); if (j.status !== 'ok') throw new Error('rss2json error');
-  return j.items.slice(0, 8).map(item => ({title:item.title||'', link:item.link||'#', source:item.author || new URL(item.link).hostname.replace('www.','') || 'News', pubDate:item.pubDate||''}));
+  const url = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rss)}`;
+  let lastErr = null;
+  for (let attempt = 0; attempt < 2; attempt++){
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('rss2json ' + res.status);
+      const j = await res.json(); if (j.status !== 'ok' || !Array.isArray(j.items)) throw new Error('rss2json error');
+      return j.items.slice(0, 8).map(item => ({title:item.title||'', link:item.link||'#', source:newsSource(item), pubDate:item.pubDate||''}));
+    } catch(e){ lastErr = e; if (attempt === 0) await new Promise(r => setTimeout(r, 1000)); }
+  }
+  throw lastErr;
 }
 async function setNewsFilter(filter, btn){
   document.querySelectorAll('.news-filter-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
