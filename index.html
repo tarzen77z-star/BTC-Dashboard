@@ -668,14 +668,26 @@ async function getCoinLoreStats() {
 const CANDLE_BASE = 'https://api.exchange.coinbase.com/products/BTC-USD/candles';
 
 async function fetchCandles(granularity, limit) {
-  const end   = Math.floor(Date.now() / 1000);
-  const start = end - (granularity * limit);
-  const url   = `${CANDLE_BASE}?granularity=${granularity}&start=${start}&end=${end}`;
-  const res   = await fetch(url);
-  if (!res.ok) throw new Error(`Candles ${res.status}`);
-  const data  = await res.json();
-  // Comes back newest→oldest, reverse to oldest→newest for chart
-  return data.reverse();
+  // Coinbase returns at most 300 candles per request, so a 365-day window
+  // needs two requests. Chunk backwards from now, dedupe by timestamp
+  // (in case a boundary candle appears in both chunks), sort oldest→newest.
+  const chunks = [];
+  let end = Math.floor(Date.now() / 1000);
+  let remaining = limit;
+  while (remaining > 0) {
+    const take = Math.min(300, remaining);
+    const start = end - (granularity * take);
+    const res = await fetch(`${CANDLE_BASE}?granularity=${granularity}&start=${start}&end=${end}`);
+    if (!res.ok) throw new Error(`Candles ${res.status}`);
+    const data = await res.json(); // newest→oldest
+    chunks.push(data);
+    if (data.length < take) break; // no more history available
+    remaining -= data.length;
+    end = start;
+  }
+  const byTs = new Map();
+  chunks.flat().forEach(c => byTs.set(c[0], c));
+  return Array.from(byTs.values()).sort((a, b) => a[0] - b[0]).slice(-limit);
 }
 
 async function getCoinLoreOHLCV() {
@@ -846,7 +858,7 @@ const TAB_CONFIG = {
   '30':  [86400, 30],   // 30D  — 30 daily candles
   '90':  [86400, 90],   // 90D  — 90 daily candles
   '120': [86400, 120],  // 120D — 120 daily candles
-  '365': [86400, 300],  // 1Y   — 300 daily candles (Coinbase max per request)
+  '365': [86400, 365],  // 1Y   — 365 daily candles (fetched in 300+65 chunks)
 };
 
 // ─── TAB SWITCH ───────────────────────────────────────────
@@ -1623,7 +1635,11 @@ function renderStockCandles(){
     $('chartMsg').style.display = 'flex'; $('priceChart').style.display = 'none'; return;
   }
   const period = activeLimit === 1 ? 14 : activeLimit;
-  const slice = s.ohlc.slice(-period);
+  // Calendar-day window, unified with company cards and Compare:
+  // last `period` calendar days ending at the last available close.
+  const lastDate = new Date(s.ohlc[s.ohlc.length-1][0] + 'T00:00:00Z');
+  const cutoff = new Date(lastDate.getTime() - period*86400000);
+  const slice = s.ohlc.filter(d => new Date(d[0] + 'T00:00:00Z') >= cutoff);
   const data = slice.map(d => ({x: new Date(d[0] + 'T00:00:00Z').getTime(), o: d[1], h: d[2], l: d[3], c: d[4]}));
   $('chartMsg').style.display = 'none'; $('compareMsg').style.display = 'none';
   const canvas = $('priceChart'); canvas.style.display = 'block'; $('compareChart').style.display = 'none';
@@ -1654,19 +1670,25 @@ async function renderCompare(){
   if (!base || !base.length){ $('compareMsg').textContent = 'Compare history unavailable in this snapshot.'; $('compareMsg').style.display = 'flex'; return; }
   $('compareMsg').textContent = 'Loading compare…'; $('compareMsg').style.display = 'flex';
   try {
-    if (!btcDailyCache) btcDailyCache = await fetchCandles(86400, 300);
+    if (!btcDailyCache) btcDailyCache = await fetchCandles(86400, 365);
     const btcSeries = btcDailyCache.map(c => [new Date(c[0]*1000).toISOString().slice(0,10), c[4]]).sort((a,b) => a[0] < b[0] ? -1 : 1);
     const period = activeLimit === 1 ? 30 : activeLimit;
     const lastDate = new Date(base[base.length-1][0] + 'T00:00:00Z');
     const cutoff = new Date(lastDate.getTime() - period*86400000);
-    const labels = base.filter(d => new Date(d[0] + 'T00:00:00Z') >= cutoff).map(d => d[0]);
-    $('compareNote').textContent = 'Rebased to 100 · ' + labels.length + ' trading days · ' + fmtRange(labels[0], labels[labels.length-1]) + ' · BTC weekend moves appear at the next trading day. Stocks are daily, so 1D is hidden in this mode.';
+    let labels = base.filter(d => new Date(d[0] + 'T00:00:00Z') >= cutoff).map(d => d[0]);
     if (labels.length < 2) throw new Error('Not enough points');
     const closeOnOrBefore = (series, date) => {
       let v = null; for (const d of series){ if (d[0] <= date) v = d[1]; else break; } return v;
     };
     const rebase = (vals) => { const first = vals[0]; return vals.map(v => v === null ? null : (v/first)*100); };
-    const btcVals = labels.map(d => closeOnOrBefore(btcSeries, d));
+    let btcVals = labels.map(d => closeOnOrBefore(btcSeries, d));
+    // If the BTC series starts after the first stock label, start the chart
+    // at the first date that actually has a BTC close, so rebase never
+    // divides by a null first value.
+    const firstBtcIdx = btcVals.findIndex(v => v !== null);
+    if (firstBtcIdx < 0) throw new Error('No BTC history for this period');
+    if (firstBtcIdx > 0) { labels = labels.slice(firstBtcIdx); btcVals = btcVals.slice(firstBtcIdx); }
+    $('compareNote').textContent = 'Rebased to 100 · ' + labels.length + ' trading days · ' + fmtRange(labels[0], labels[labels.length-1]) + ' · BTC weekend moves appear at the next trading day. Stocks are daily, so 1D is hidden in this mode.';
     const datasets = [{label:'BTC', data: rebase(btcVals), borderColor:'#f7931a', borderWidth:3, pointRadius:0, tension:0.1}];
     compareSelected.forEach(sym => {
       const s = t[sym]; if (!s || !s.daily || !s.daily.length) return;
