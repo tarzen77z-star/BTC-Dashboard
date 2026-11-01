@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
 <meta name="theme-color" content="#080b10">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -395,8 +395,8 @@ body::before{content:'';position:fixed;inset:0;
     <div class="chart-wrap">
       <div class="chart-msg" id="chartMsg">Loading chart…</div>
       <div class="chart-msg" id="compareMsg">Loading compare…</div>
-      <canvas id="priceChart"></canvas>
-      <canvas id="compareChart"></canvas>
+      <canvas id="priceChart" role="img" aria-label="Bitcoin price chart"></canvas>
+      <canvas id="compareChart" role="img" aria-label="Bitcoin versus stocks chart, rebased to 100"></canvas>
     </div>
     <div class="stocks-note" id="compareNote" style="display:none">Rebased to 100 at the start of the period · stock trading days only · BTC weekend moves appear at the next trading day.</div>
     <div class="stocks-note" id="stockNote" style="display:none">Daily stock candles · delayed · snapshot Oct 30, 2026. Stocks are daily, so 1D is hidden in this mode.</div>
@@ -442,7 +442,7 @@ body::before{content:'';position:fixed;inset:0;
         <div class="hm-stat"><span class="hm-stat-label">STATUS</span><span id="hmStatus" style="color:var(--muted)">Connecting…</span></div>
       </div>
       <div class="hm-wrap">
-        <canvas id="hmCanvas"></canvas>
+        <canvas id="hmCanvas" role="img" aria-label="Bitcoin order-book liquidity heatmap"></canvas>
         <div class="hm-overlay" id="hmOverlay">
           <div class="hm-overlay-text">🔴 Connecting to Coinbase…<br><span style="font-size:10px;opacity:0.6">Heatmap builds as data arrives</span></div>
         </div>
@@ -456,6 +456,7 @@ body::before{content:'';position:fixed;inset:0;
       <div style="font-family:var(--mono);font-size:9px;color:var(--muted);padding:6px 12px;text-align:center">
         Green = Buy orders · Red = Sell orders · Brighter = More BTC at that price
       </div>
+      <div id="hmScale" style="font-family:var(--mono);font-size:9px;color:var(--muted);padding:0 12px 6px;text-align:center"></div>
     </div>
   </div>
 
@@ -531,8 +532,8 @@ body::before{content:'';position:fixed;inset:0;
         <div class="cd-box"><div class="cd-num" id="cd-days">—</div><div class="cd-unit">Days</div></div>
         <div class="cd-box"><div class="cd-num" id="cd-hours">—</div><div class="cd-unit">Hours</div></div>
         <div class="cd-box"><div class="cd-num" id="cd-mins">—</div><div class="cd-unit">Mins</div></div>
-        <div class="cd-box"><div class="cd-num" id="cd-secs">—</div><div class="cd-unit">Secs</div></div>
       </div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:10px">Estimate only — the halving happens at block 1,050,000, so the date moves with block times, not the calendar.</div>
 
       <div class="halving-progress-wrap">
         <div class="halving-progress-label">
@@ -1110,10 +1111,21 @@ function hmInit() {
   HM.ctx    = HM.canvas.getContext('2d');
   HM.startTs = Date.now();
 
-  // Size canvas to container
-  const wrap = HM.canvas.parentElement;
-  HM.canvas.width  = wrap.offsetWidth  || 440;
-  HM.canvas.height = wrap.offsetHeight || 240;
+  // Size canvas to container (canvas was sized once at load, so rotating
+  // the phone or resizing the window used to leave a stretched/blank map)
+  const hmResize = () => {
+    const wrap = HM.canvas.parentElement;
+    HM.canvas.width  = wrap.offsetWidth  || 440;
+    HM.canvas.height = wrap.offsetHeight || 240;
+    hmDraw();
+  };
+  HM.canvas.width  = HM.canvas.parentElement.offsetWidth  || 440;
+  HM.canvas.height = HM.canvas.parentElement.offsetHeight || 240;
+  let hmResizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(hmResizeTimer);
+    hmResizeTimer = setTimeout(hmResize, 200);
+  });
 
   hmConnect();
   HM.elapsedTimer = setInterval(hmUpdateElapsed, 1000);
@@ -1230,7 +1242,9 @@ function hmDraw() {
   const priceLo   = Math.floor((latestMid - halfRange) / HM.PRICE_BUCKET) * HM.PRICE_BUCKET;
   const priceHi   = priceLo + HM.PRICE_LEVELS * HM.PRICE_BUCKET;
 
-  // Find max size for color scaling
+  // Find max size for color scaling. Colors rescale to the largest order
+  // in view, so they are NOT comparable over time unless the reader knows
+  // the current scale — it is shown under the heatmap (hmScale).
   let maxSize = 0.1;
   snaps.forEach(s => {
     Object.values(s.bids).forEach(v => { if (v > maxSize) maxSize = v; });
@@ -1277,6 +1291,9 @@ function hmDraw() {
   ctx.fillStyle = 'rgba(255,255,255,0.9)';
   ctx.font      = '9px Share Tech Mono, monospace';
   ctx.fillText('$' + Math.round(latestMid).toLocaleString(), 4, midY - 3);
+
+  const scaleEl = document.getElementById('hmScale');
+  if (scaleEl) scaleEl.textContent = 'Brightest cell = ' + maxSize.toFixed(1) + ' BTC in current view (scale rescales with the largest order)';
 
   // Update Y-axis labels
   const axisEl = document.getElementById('hmAxis');
@@ -1339,8 +1356,7 @@ function tickHalving() {
     $('cd-days').textContent  = '00';
     $('cd-hours').textContent = '00';
     $('cd-mins').textContent  = '00';
-    $('cd-secs').textContent  = '00';
-    $('halvingPct').textContent = '100% complete';
+    $('halvingPct').textContent = '100% (calendar estimate)';
     $('halvingFill').style.width = '100%';
     return;
   }
@@ -1348,22 +1364,23 @@ function tickHalving() {
   const days  = Math.floor(remaining / 86400000);
   const hours = Math.floor((remaining % 86400000) / 3600000);
   const mins  = Math.floor((remaining % 3600000)  / 60000);
-  const secs  = Math.floor((remaining % 60000)    / 1000);
 
   $('cd-days').textContent  = days;
   $('cd-hours').textContent = pad(hours);
   $('cd-mins').textContent  = pad(mins);
-  $('cd-secs').textContent  = pad(secs);
 
+  // % is elapsed CALENDAR time between the two halving dates, not block
+  // progress — block height, not the calendar, decides the real date.
   const elapsed = now - LAST_HALVING;
   const pct     = Math.min(100, (elapsed / CYCLE_MS) * 100).toFixed(1);
-  $('halvingPct').textContent     = pct + '% complete';
+  $('halvingPct').textContent     = pct + '% (calendar estimate)';
   $('halvingFill').style.width    = pct + '%';
 }
 
-// Tick every second — pure JS math, zero API calls
+// No second-by-second ticking: a ~2028 estimate does not need second
+// precision, and ticking to the second implied it was exact.
 tickHalving();
-setInterval(tickHalving, 1000);
+setInterval(tickHalving, 60000);
 
 // ─── NEWS ─────────────────────────────────────────────────
 // rss2json.com converts Google News RSS → JSON with open CORS
@@ -1566,7 +1583,7 @@ function renderStockStrip(){
   const t = stockTickers();
   $('stockStrip').innerHTML = STOCK_ORDER.map(sym => {
     const s = t[sym]; if (!s) return '';
-    return `<div class="stock-card" onclick="document.getElementById('companiesSection').scrollIntoView({behavior:'smooth'})">
+    return `<div class="stock-card" role="button" tabindex="0" onclick="document.getElementById('companiesSection').scrollIntoView({behavior:'smooth'})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('companiesSection').scrollIntoView({behavior:'smooth'})}">
       <div class="sc-ticker">${sym}</div><div class="sc-role">${s.role}</div>
       <div class="sc-price">${fUSD(s.price, s.price < 20 ? 2 : 2)}</div>
       <div class="sc-chg" style="color:${pctColor(s.changePct)}">${pctText(s.changePct)}</div>
@@ -1654,7 +1671,7 @@ function renderCompanies(){
 }
 async function loadStocks(){
   try {
-    const res = await fetch('data/stocks.json');
+    const res = await fetch('data/stocks.json', {cache: 'no-store'}); // No-store: a pushed snapshot must never sit behind the old cached copy (the footnote saga, Nov 1)
     if (res.ok){ const j = await res.json(); if (j.tickers) stockData = j; }
   } catch(e){ console.warn('stocks.json unavailable, using fallback', e); }
   renderStockStrip(); renderCompanies(); renderCompareChips(); renderStockChips(); if (typeof chartMode !== 'undefined' && chartMode === 'stock') renderStockCandles();
@@ -1853,7 +1870,17 @@ async function renderCompare(){
 // ─── NEWS FILTERS + COMPANY NEWS ──────────────────────────
 function newsSource(item){
   if (item.author) return item.author;
-  try { return new URL(item.link).hostname.replace('www.',''); } catch(e){ return 'News'; }
+  // Google News items arrive with an empty author and a news.google.com
+  // redirect link, so the host is useless as a source ("NEWS.GOOGLE.COM"
+  // for every item). The real outlet is the title suffix: "… - CNBC".
+  try {
+    const host = new URL(item.link).hostname.replace('www.','');
+    if (host === 'news.google.com' && item.title) {
+      const m = item.title.match(/\s-\s([^-]+)$/);
+      if (m) return m[1].trim();
+    }
+    return host;
+  } catch(e){ return 'News'; }
 }
 async function fetchNewsForQuery(q){
   const rss = `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=en-US&gl=US&ceid=US:en`;
