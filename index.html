@@ -399,7 +399,7 @@ body::before{content:'';position:fixed;inset:0;
       <canvas id="compareChart"></canvas>
     </div>
     <div class="stocks-note" id="compareNote" style="display:none">Rebased to 100 at the start of the period · stock trading days only · BTC weekend moves appear at the next trading day.</div>
-    <div class="stocks-note" id="stockNote" style="display:none">Daily stock candles · delayed · snapshot Oct 30, 2026 · 1D intraday not available for stocks, showing 14D.</div>
+    <div class="stocks-note" id="stockNote" style="display:none">Daily stock candles · delayed · snapshot Oct 30, 2026. Stocks are daily, so 1D is hidden in this mode.</div>
   </div>
 
   <!-- MARKET INFO -->
@@ -1543,8 +1543,19 @@ async function refreshStocksLive(){
 }
 let chartMode = 'btc';
 let stockTicker = 'MSTR';
+function updateTimeTabsForMode(){
+  const btn1 = document.querySelector('.time-tab[data-limit="1"]');
+  if (btn1) btn1.style.display = (chartMode === 'btc') ? '' : 'none';
+  if (chartMode !== 'btc' && activeLimit === 1){
+    activeLimit = (chartMode === 'stock') ? 14 : 30;
+    document.querySelectorAll('.time-tab').forEach(t => t.classList.remove('active'));
+    const nb = document.querySelector('.time-tab[data-limit="' + activeLimit + '"]');
+    if (nb) nb.classList.add('active');
+  }
+}
 function setChartMode(mode){
   chartMode = mode; compareMode = (mode === 'compare');
+  updateTimeTabsForMode();
   $('btnBtcChart').classList.toggle('active', mode === 'btc');
   $('btnCompareChart').classList.toggle('active', mode === 'compare');
   $('btnStockChart').classList.toggle('active', mode === 'stock');
@@ -1601,9 +1612,7 @@ function renderStockCandles(){
         y: {position: 'right',
           ticks: {color: '#4e6a88', font: {family: 'Share Tech Mono', size: 9}, callback: v => '$' + v},
           grid: {color: 'rgba(30,45,69,0.4)'}, border: {display: false}}}}});
-  $('stockNote').textContent = activeLimit === 1
-    ? 'Daily stock candles · 1D intraday not available for stocks, showing 14D · delayed · snapshot Oct 30, 2026.'
-    : 'Daily stock candles · delayed · snapshot Oct 30, 2026.';
+  $('stockNote').textContent = stockTicker + ' · ' + slice.length + ' daily candles · ' + slice[0][0] + ' – ' + slice[slice.length-1][0] + ' · delayed · snapshot Oct 30, 2026. Stocks are daily, so there is no intraday 1D chart — 1D is hidden in this mode.';
 }
 async function renderCompare(){
   if (!compareMode) return;
@@ -1618,6 +1627,7 @@ async function renderCompare(){
     const lastDate = new Date(base[base.length-1][0] + 'T00:00:00Z');
     const cutoff = new Date(lastDate.getTime() - period*86400000);
     const labels = base.filter(d => new Date(d[0] + 'T00:00:00Z') >= cutoff).map(d => d[0]);
+    $('compareNote').textContent = 'Rebased to 100 · ' + labels.length + ' trading days · ' + labels[0] + ' – ' + labels[labels.length-1] + ' · BTC weekend moves appear at the next trading day. Stocks are daily, so 1D is hidden in this mode.';
     if (labels.length < 2) throw new Error('Not enough points');
     const closeOnOrBefore = (series, date) => {
       let v = null; for (const d of series){ if (d[0] <= date) v = d[1]; else break; } return v;
