@@ -563,7 +563,6 @@ body::before{content:'';position:fixed;inset:0;
     <div class="section-title">Latest News</div>
     <div class="news-filters" id="newsFilters">
       <button class="news-filter-btn active" data-filter="all" onclick="setNewsFilter('all',this)">All</button>
-      <button class="news-filter-btn" data-filter="btc" onclick="setNewsFilter('btc',this)">BTC</button>
       <button class="news-filter-btn" data-filter="MSTR" onclick="setNewsFilter('MSTR',this)">MSTR</button>
       <button class="news-filter-btn" data-filter="COIN" onclick="setNewsFilter('COIN',this)">COIN</button>
       <button class="news-filter-btn" data-filter="MARA" onclick="setNewsFilter('MARA',this)">MARA</button>
@@ -1375,8 +1374,25 @@ const NEWS_REFRESH    = 10 * 60 * 1000; // 10 minutes
 let newsTimer         = null;
 let lastNewsTs        = 0;
 
+// Escape text before inserting into innerHTML: feed titles/sources are
+// third-party strings, so they must never be parsed as HTML (a title
+// containing markup used to render — or garble — as markup).
+function escHtml(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+// Only http(s) links are clickable; anything else (javascript:, data:, '#')
+// becomes a dead link instead of an executable href.
+function safeHref(link) {
+  try { const u = new URL(link); return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : '#'; }
+  catch(e){ return '#'; }
+}
+
 function timeAgo(dateStr) {
   const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+  // Future-dated items (feed clock skew) used to read "-5s ago".
+  if (diff <= 0)    return 'just now';
   if (diff < 60)    return diff + 's ago';
   if (diff < 3600)  return Math.floor(diff/60) + 'm ago';
   if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
@@ -1384,18 +1400,29 @@ function timeAgo(dateStr) {
 }
 
 async function fetchNews() {
-  const res = await fetch(NEWS_URL);
-  if (!res.ok) throw new Error(`rss2json ${res.status}`);
-  const j = await res.json();
-  if (j.status !== 'ok') throw new Error('rss2json error: ' + j.message);
-
-  // rss2json returns { status, feed, items: [...] }
-  return j.items.slice(0, 8).map(item => ({
-    title:   item.title   || '',
-    link:    item.link    || '#',
-    source:  item.author  || new URL(item.link).hostname.replace('www.','') || 'News',
-    pubDate: item.pubDate || '',
-  }));
+  // One retry after 1s, same as the company-news fetches — a single
+  // transient rss2json failure used to blank the whole list.
+  let lastErr = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch(NEWS_URL);
+      if (!res.ok) throw new Error(`rss2json ${res.status}`);
+      const j = await res.json();
+      if (j.status !== 'ok') throw new Error('rss2json error: ' + j.message);
+      // rss2json returns { status, feed, items: [...] }
+      // Drop known placeholder titles (seen live: "META_TITLE_QUOTE - Yahoo Finance")
+      // and items with no usable title, instead of rendering them as news.
+      return j.items
+        .filter(item => item.title && !item.title.includes('META_TITLE_QUOTE'))
+        .slice(0, 8).map(item => ({
+          title:   item.title   || '',
+          link:    item.link    || '#',
+          source:  newsSource(item),
+          pubDate: item.pubDate || '',
+        }));
+    } catch(e){ lastErr = e; if (attempt === 0) await new Promise(r => setTimeout(r, 1000)); }
+  }
+  throw lastErr;
 }
 
 // ─── NEWS TAG DETECTION ───────────────────────────────────
@@ -1429,11 +1456,20 @@ const TAG_RULES = [
 ];
 
 function getTag(title) {
+  // Word boundaries, not substrings: 'sec' must not match 'seconds'/'sector',
+  // 'ban' must not match 'bank'/'balance'. Longest matched phrase wins, so
+  // 'treasury dept' (regulation) beats plain 'treasury' (institutional)
+  // instead of first-rule-wins deciding it.
   const lower = title.toLowerCase();
+  let best = null, bestLen = 0;
   for (const rule of TAG_RULES) {
-    if (rule.words.some(w => lower.includes(w))) return rule;
+    for (const w of rule.words) {
+      const esc = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+      const re = new RegExp('(?<![a-z0-9])' + esc + '(?![a-z0-9])');
+      if (re.test(lower) && w.length > bestLen) { best = rule; bestLen = w.length; }
+    }
   }
-  return null;
+  return best;
 }
 
 function renderNews(articles) {
@@ -1450,12 +1486,12 @@ function renderNews(articles) {
       : '';
 
     return `
-      <a class="news-item" href="${a.link}" target="_blank" rel="noopener"
+      <a class="news-item" href="${escHtml(safeHref(a.link))}" target="_blank" rel="noopener"
          style="animation-delay:${i * 0.04}s">
-        <div class="news-headline">${a.title}</div>
+        <div class="news-headline">${escHtml(a.title)}</div>
         <div class="news-meta">
           ${tagHtml}
-          <span class="news-source">${a.source}</span>
+          <span class="news-source">${escHtml(a.source)}</span>
           <span class="news-time">${a.pubDate ? timeAgo(a.pubDate) : ''}</span>
         </div>
       </a>`;
@@ -1465,14 +1501,28 @@ function renderNews(articles) {
   $('newsUpdated').textContent = 'News updated ' + nowStr();
 }
 
+let activeNewsFilter = 'all';
 async function refreshNews() {
+  // The 10-minute timer used to always render the main feed, even while
+  // the user was looking at a company filter (button still said MSTR,
+  // list showed All). Re-fetch the active filter instead.
   try {
+    if (activeNewsFilter && activeNewsFilter !== 'all') {
+      const a = await fetchNewsForQuery(NEWS_QUERIES[activeNewsFilter]);
+      newsCache[activeNewsFilter] = a;
+      renderNews(a);
+      return;
+    }
     const articles = await fetchNews();
     newsCache.btc = articles;
     renderNews(articles);
   } catch(e) {
     console.error('News error:', e);
-    $('newsList').innerHTML = '<div class="news-loading">⚠ News unavailable — will retry</div>';
+    // Keep the existing list on a transient failure; only show the error
+    // state if there is nothing to keep.
+    if (!$('newsList').querySelector('.news-item')) {
+      $('newsList').innerHTML = '<div class="news-loading">⚠ News unavailable — will retry</div>';
+    }
   }
 }
 
@@ -1821,7 +1871,8 @@ async function fetchNewsForQuery(q){
 }
 async function setNewsFilter(filter, btn){
   document.querySelectorAll('.news-filter-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
-  if (filter === 'all' || filter === 'btc'){
+  activeNewsFilter = filter;
+  if (filter === 'all'){
     if (newsCache.btc) renderNews(newsCache.btc); else refreshNews();
     return;
   }
@@ -1835,7 +1886,7 @@ async function loadCompanyNews(sym, btn){
   const box = $('news-' + sym);
   try {
     const a = await fetchNewsForQuery(NEWS_QUERIES[sym]);
-    box.innerHTML = a.slice(0,3).map(x => `<a href="${x.link}" target="_blank" rel="noopener">${x.title}<br><span style="font-family:var(--mono);font-size:9px;color:var(--muted)">${x.source} · ${x.pubDate ? timeAgo(x.pubDate) : ''}</span></a>`).join('');
+    box.innerHTML = a.filter(x => x.title && !x.title.includes('META_TITLE_QUOTE')).slice(0,3).map(x => `<a href="${escHtml(safeHref(x.link))}" target="_blank" rel="noopener">${escHtml(x.title)}<br><span style="font-family:var(--mono);font-size:9px;color:var(--muted)">${escHtml(x.source)} · ${x.pubDate ? timeAgo(x.pubDate) : ''}</span></a>`).join('');
     btn.textContent = 'Headlines loaded';
   } catch(e){ box.innerHTML = '<div class="news-loading">⚠ Headlines unavailable — try again later</div>'; btn.disabled = false; btn.textContent = 'Load ' + sym + ' headlines'; }
 }
