@@ -1462,10 +1462,10 @@ async function refreshNews() {
 // if it fails, the snapshot stays and is labelled as such. No key in browser.
 const STOCK_ORDER = ['MSTR','COIN','MARA','RIOT'];
 const STOCK_FALLBACK = {
-  MSTR:{name:'Strategy',role:'Bitcoin treasury',btcHeld:848517,btcAsOf:'2026-10-25',note:'Largest corporate BTC holder. Watch: BTC per share and premium to BTC value.',price:130.51,prevClose:141.62,changePct:-7.84,daily:[]},
-  COIN:{name:'Coinbase Global',role:'Crypto exchange',btcHeld:17954,btcAsOf:'2026-09-30',note:'Exchange proxy, not a pure treasury play. BTC is small next to its whole business.',price:143.54,prevClose:160.59,changePct:-10.62,daily:[]},
-  MARA:{name:'MARA Holdings',role:'Bitcoin miner',btcHeld:35577,btcAsOf:'2026-06-30',note:'Miner + treasury. Moves with BTC and with mining economics.',price:6.77,prevClose:7.165,changePct:-5.51,daily:[]},
-  RIOT:{name:'Riot Platforms',role:'Bitcoin miner',btcHeld:11380,btcAsOf:'2026-06-30',note:'Miner + treasury. Moves with BTC and with mining economics.',price:12.81,prevClose:13.74,changePct:-6.77,daily:[]},
+  MSTR:{name:'Strategy',role:'Bitcoin treasury',btcHeld:848517,btcAsOf:'2026-10-25',btcFoot:'',note:'Largest corporate BTC holder. Watch: BTC per share and premium to BTC value.',price:130.51,prevClose:141.62,changePct:-7.84,daily:[]},
+  COIN:{name:'Coinbase Global',role:'Crypto exchange',btcHeld:17954,btcAsOf:'2026-09-30',btcFoot:'Investment holdings only. Plus 117 BTC held for operations = 18,071 BTC total.',note:'Exchange proxy, not a pure treasury play. BTC is small next to its whole business.',price:143.54,prevClose:160.59,changePct:-10.62,daily:[]},
+  MARA:{name:'MARA Holdings',role:'Bitcoin miner',btcHeld:35577,btcAsOf:'2026-06-30',btcFoot:'Last reported balance — Q3 report (through Sep 30) was not yet out in late Oct. At Jun 30: 26,307 unrestricted, 4,742 on loan, 4,528 pledged.',note:'Miner + treasury. Moves with BTC and with mining economics.',price:6.77,prevClose:7.165,changePct:-5.51,daily:[]},
+  RIOT:{name:'Riot Platforms',role:'Bitcoin miner',btcHeld:11380,btcAsOf:'2026-06-30',btcFoot:'Last reported balance (Jun 30). No newer filing confirmed here as of Nov 1. At Jun 30, 5,821 BTC was pledged as collateral; that pledge was released Sep 21.',note:'Miner + treasury. Moves with BTC and with mining economics.',price:12.81,prevClose:13.74,changePct:-6.77,daily:[]},
 };
 let stockData = null; // {asOf, tickers:{sym:{...daily:[[date,close]]}}}
 let compareMode = false;
@@ -1560,12 +1560,16 @@ function renderCompanies(){
   $('companyGrid').innerHTML = STOCK_ORDER.map(sym => {
     const s = t[sym]; if (!s) return '';
     const r30 = returnForDays(s.daily, 30), r1y = returnForDays(s.daily, 365);
+    // Holdings are filing dates, not live: flag anything over 90 days old.
+    const ageDays = Math.floor((Date.now() - Date.parse(s.btcAsOf + 'T00:00:00Z')) / 86400000);
+    const ageNote = ageDays > 90 ? ` · ${ageDays} days old` : '';
     return `<div class="company-card">
       <div class="company-top"><div><div class="company-name">${s.name} (${sym})</div>
-      <div class="company-role">${s.role} · ${s.btcHeld.toLocaleString('en-US')} BTC held · as of ${s.btcAsOf}</div></div>
+      <div class="company-role">${s.role} · ${s.btcHeld.toLocaleString('en-US')} BTC held · last reported ${s.btcAsOf}${ageNote}</div></div>
       <div><div class="company-price">${fUSD(s.price,2)}</div>
       <div class="company-chg" style="color:${pctColor(s.changePct)}">${pctText(s.changePct)} today</div></div></div>
       <div class="company-note">${s.note}</div>
+      ${s.btcFoot ? `<div class="company-note">${s.btcFoot}</div>` : ''}
       <div class="company-stats">
         <div class="company-stat"><div class="company-stat-label">30D</div><div class="company-stat-val" style="color:${r30===null?'var(--muted)':pctColor(r30)}">${r30===null?'—':pctText(r30)}</div></div>
         <div class="company-stat"><div class="company-stat-label">1Y</div><div class="company-stat-val" style="color:${r1y===null?'var(--muted)':pctColor(r1y)}">${r1y===null?'—':pctText(r1y)}</div></div>
