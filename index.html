@@ -638,7 +638,7 @@ const setVal   = (id,v) => { const e=$(id); e.textContent=v; e.classList.remove(
 const sleep    = ms => new Promise(r => setTimeout(r, ms));
 
 // ─── STALE STORE ──────────────────────────────────────────
-const stale = { price: null, fg: null, stats: null };
+const stale = { price: null, fg: null, stats: null, ath: null };
 
 // ─── FETCH ────────────────────────────────────────────────
 async function getCoinbasePrice() {
@@ -703,6 +703,18 @@ async function getFG() {
     const r = await fetch(FNG_URL);
     if (!r.ok) return null;
     return (await r.json()).data[0];
+  } catch { return null; }
+}
+
+// Live all-time high from CoinGecko (no key, CORS open, ~1 call/min here).
+// Returns {value, date} or null; callers fall back to BTC_ATH below.
+async function getLiveATH() {
+  try {
+    const r = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false');
+    if (!r.ok) return null;
+    const md = (await r.json()).market_data;
+    if (!md || !md.ath || !md.ath.usd) return null;
+    return { value: parseFloat(md.ath.usd), date: md.ath_date ? md.ath_date.usd : null };
   } catch { return null; }
 }
 
@@ -897,7 +909,7 @@ function renderFG(fg) {
 }
 
 // ─── BUY SIGNAL ───────────────────────────────────────────
-const BTC_ATH = 126198.07; // All-time high — update manually if exceeded
+const BTC_ATH = 126198.07; // Fallback all-time high, used only if the live CoinGecko ATH fetch fails
 
 function renderSignal(fg) {
   const fgVal     = fg ? parseInt(fg.value) : null;
@@ -940,13 +952,21 @@ function renderSignal(fg) {
   }
 
   // ── Factor 3: Distance from ATH (using live Coinbase price)
+  // Effective ATH is the live CoinGecko ATH when available, else the
+  // hardcoded fallback — so the % below ATH never goes stale as the
+  // true ATH moves. The label shows the ATH value (and date when known)
+  // so the reader can see which ATH the % is measured against.
+  const effATH = (stale.ath && stale.ath.value) ? stale.ath.value : BTC_ATH;
+  const athSuffix = (stale.ath && stale.ath.value)
+    ? ` (ATH ${fUSD(effATH, 0)}${stale.ath.date ? ', ' + new Date(stale.ath.date).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'}) : ''})`
+    : '';
   let athScore = 0, athLabel = '', athClass = 'mid';
   if (livePrice !== null) {
-    const pctFromATH = ((BTC_ATH - livePrice) / BTC_ATH) * 100;
-    if (pctFromATH >= 40)      { athScore = +1; athLabel = `${pctFromATH.toFixed(1)}% below ATH (historically cheap)`;  athClass = 'good'; }
-    else if (pctFromATH >= 15) { athScore =  0; athLabel = `${pctFromATH.toFixed(1)}% below ATH (mid-range)`;           athClass = 'mid';  }
-    else if (pctFromATH >= 0)  { athScore = -1; athLabel = `${pctFromATH.toFixed(1)}% below ATH (near all-time high)`;  athClass = 'bad';  }
-    else                       { athScore = -1; athLabel = `New ATH! (+${Math.abs(pctFromATH).toFixed(1)}% above)`;      athClass = 'bad';  }
+    const pctFromATH = ((effATH - livePrice) / effATH) * 100;
+    if (pctFromATH >= 40)      { athScore = +1; athLabel = `${pctFromATH.toFixed(1)}% below ATH (historically cheap)` + athSuffix;  athClass = 'good'; }
+    else if (pctFromATH >= 15) { athScore =  0; athLabel = `${pctFromATH.toFixed(1)}% below ATH (mid-range)` + athSuffix;           athClass = 'mid';  }
+    else if (pctFromATH >= 0)  { athScore = -1; athLabel = `${pctFromATH.toFixed(1)}% below ATH (near all-time high)` + athSuffix;  athClass = 'bad';  }
+    else                       { athScore = -1; athLabel = `New ATH! (+${Math.abs(pctFromATH).toFixed(1)}% above)` + athSuffix;      athClass = 'bad';  }
   } else {
     athLabel = 'Loading…'; athClass = 'mid';
   }
@@ -981,7 +1001,10 @@ function renderSignal(fg) {
   $('sf-chg').textContent = chgLabel; $('sf-chg').className = `sf-val ${chgClass}`;
   $('sf-ath').textContent = athLabel; $('sf-ath').className = `sf-val ${athClass}`;
 
-  const scoreText  = total > 0 ? `+${total} / 3 Positive` : total < 0 ? `${total} / 3 Negative` : '0 / 3 Neutral';
+  // Score wording matches the verdict thresholds: only +/-2 or more is a
+  // strong signal, so +/-1 is a lean, not "Positive"/"Negative" — the old
+  // wording claimed Positive while the heading said NEUTRAL for total +1.
+  const scoreText  = total > 0 ? `+${total} / 3 Leaning positive` : total < 0 ? `${total} / 3 Leaning negative` : '0 / 3 Neutral';
   const scoreClass = total >= 2 ? 'good' : total <= -2 ? 'bad' : 'mid';
   $('sf-score').textContent = scoreText;
   $('sf-score').className   = `sf-val ${scoreClass}`;
@@ -1043,10 +1066,12 @@ async function refreshAll() {
     $('priceChart').style.display = 'none';
   }
 
-  // 4. Fear & Greed — independent
+  // 4. Fear & Greed + live ATH — independent
   try {
     const fg = await getFG();
     if (fg) stale.fg = fg;
+    const ath = await getLiveATH();
+    if (ath) stale.ath = ath;
     renderFG(fg || stale.fg);
     renderSignal(fg || stale.fg);
   } catch(e) {
