@@ -756,6 +756,8 @@ function renderChart(candles, limit) {
   }));
 
   $('chartMsg').style.display = 'none';
+  $('compareChart').style.display = 'none';
+  $('compareMsg').style.display = 'none';
   const canvas = $('priceChart');
   canvas.style.display = 'block';
   if (chartInst) chartInst.destroy();
@@ -988,11 +990,25 @@ async function refreshAll() {
     // Silently skip — will retry on next refresh
   }
 
-  // 3. Chart — Coinbase candles, single request ✅
+  // 3. Chart — re-render the CURRENT mode, never force BTC over stock/compare.
+  // (Previous bug: this always drew BTC candles, while the Stock/Compare
+  // buttons and notes stayed on, so the chart silently stopped matching them.
+  // The 60s auto-refresh uses this same path, so it flipped charts on its own.)
   try {
-    const [gran, limit] = TAB_CONFIG[String(activeLimit)] || [3600, 24];
-    const candles = await fetchCandles(gran, limit);
-    renderChart(candles, limit);
+    if (typeof chartMode !== 'undefined' && chartMode === 'stock') {
+      renderStockCandles();
+    } else if (typeof chartMode !== 'undefined' && chartMode === 'compare') {
+      $('priceChart').style.display = 'none';
+      $('chartMsg').style.display = 'none';
+      btcDailyCache = null; // fresh BTC daily series for the rebased chart
+      await renderCompare();
+    } else {
+      $('compareChart').style.display = 'none';
+      $('compareMsg').style.display = 'none';
+      const [gran, limit] = TAB_CONFIG[String(activeLimit)] || [3600, 24];
+      const candles = await fetchCandles(gran, limit);
+      renderChart(candles, limit);
+    }
   } catch(e) {
     console.warn('Chart unavailable:', e.message);
     $('chartMsg').textContent = '⚠ Chart unavailable — tap Refresh to retry';
@@ -1631,6 +1647,8 @@ function renderStockCandles(){
 }
 async function renderCompare(){
   if (!compareMode) return;
+  $('priceChart').style.display = 'none';
+  $('chartMsg').style.display = 'none';
   const t = stockTickers();
   const baseSym = 'MSTR'; const base = t[baseSym] && t[baseSym].daily;
   if (!base || !base.length){ $('compareMsg').textContent = 'Compare history unavailable in this snapshot.'; $('compareMsg').style.display = 'flex'; return; }
