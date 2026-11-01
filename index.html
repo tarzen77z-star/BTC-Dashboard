@@ -1712,7 +1712,12 @@ async function renderCompare(){
   if (!base || !base.length){ $('compareMsg').textContent = 'Compare history unavailable in this snapshot.'; $('compareMsg').style.display = 'flex'; return; }
   $('compareMsg').textContent = 'Loading compare…'; $('compareMsg').style.display = 'flex';
   try {
-    if (!btcDailyCache) btcDailyCache = await fetchCandles(86400, 365);
+    // 380, not 365: the compare window is anchored to the stock snapshot's
+    // last date (Oct 30), while this fetch is anchored to today. The extra
+    // 15 days cover that lag, so the BTC series still reaches the stock
+    // window's start (Oct 30, 2025) instead of the guard slicing off the
+    // first trading days (it sliced Oct 30-31, leaving 250 days from Nov 3).
+    if (!btcDailyCache) btcDailyCache = await fetchCandles(86400, 380);
     const btcSeries = btcDailyCache.map(c => [new Date(c[0]*1000).toISOString().slice(0,10), c[4]]).sort((a,b) => a[0] < b[0] ? -1 : 1);
     const period = activeLimit === 1 ? 30 : activeLimit;
     const lastDate = new Date(base[base.length-1][0] + 'T00:00:00Z');
