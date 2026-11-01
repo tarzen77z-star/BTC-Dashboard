@@ -591,9 +591,8 @@ body::before{content:'';position:fixed;inset:0;
     <span class="badge">STOCKS · DELAYED DAILY CLOSES</span>
   </div>
 
-  <button class="refresh-btn" id="refreshBtn" onclick="refreshAll()">↻ &nbsp;REFRESH DATA</button>
-
   <div class="footer">
+    Auto-updates every 60 seconds · News every 10 minutes · No refresh button needed<br>
     Price &amp; Chart via <a href="https://coinbase.com" target="_blank">Coinbase</a> ·
     Stats via <a href="https://coinlore.com" target="_blank">CoinLore</a><br>
     Sentiment via <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank">Alternative.me</a> ·
@@ -880,7 +879,7 @@ async function switchTab(btn) {
     renderChart(data, limit);
   } catch(e) {
     console.error('Chart tab error:', e);
-    $('chartMsg').textContent = '⚠ Chart unavailable — tap Refresh to retry';
+    $('chartMsg').textContent = '⚠ Chart unavailable — auto-refresh will retry';
     $('chartMsg').style.display = 'flex';
   }
 }
@@ -991,9 +990,8 @@ function renderSignal(fg) {
 // ─── MAIN REFRESH ─────────────────────────────────────────
 // Each section fetches independently — one failure won't block others
 async function refreshAll() {
-  const btn = $('refreshBtn');
-  btn.disabled = true;
-  btn.textContent = '↻  REFRESHING…';
+  // No Refresh button: the page auto-updates every 60s (news every 10 min),
+  // so there is no manual control to disable/relabel here.
   $('errorBox').style.display = 'none';
 
   let anyError = false;
@@ -1040,7 +1038,7 @@ async function refreshAll() {
     }
   } catch(e) {
     console.warn('Chart unavailable:', e.message);
-    $('chartMsg').textContent = '⚠ Chart unavailable — tap Refresh to retry';
+    $('chartMsg').textContent = '⚠ Chart unavailable — auto-refresh will retry';
     $('chartMsg').style.display = 'flex';
     $('priceChart').style.display = 'none';
   }
@@ -1057,8 +1055,6 @@ async function refreshAll() {
     else $('fgMood').textContent = 'Unavailable';
   }
 
-  btn.disabled = false;
-  btn.textContent = '↻  REFRESH DATA';
 }
 
 // ─── LIVE LIQUIDITY HEATMAP ───────────────────────────────
@@ -1776,7 +1772,7 @@ async function renderCompare(){
           y:{ticks:{color:'#4e6a88', font:{family:'Share Tech Mono', size:9}, callback: v => v.toFixed(0)}, grid:{color:'rgba(30,45,69,0.4)'}, border:{display:false}}}}});
   } catch(e){
     console.error('Compare error:', e);
-    $('compareMsg').textContent = '⚠ Compare unavailable — tap Refresh to retry'; $('compareMsg').style.display = 'flex';
+    $('compareMsg').textContent = '⚠ Compare unavailable — auto-refresh will retry'; $('compareMsg').style.display = 'flex';
   }
 }
 // ─── NEWS FILTERS + COMPANY NEWS ──────────────────────────
