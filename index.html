@@ -375,7 +375,7 @@ body::before{content:'';position:fixed;inset:0;
 
   <div class="desk-row row-chart">
   <!-- CHART -->
-  <div class="section">
+  <div class="section" id="chartSection">
     <div class="section-title">Price Chart</div>
     <div class="time-tabs">
       <button class="time-tab active" data-limit="1"   onclick="switchTab(this)">1D</button>
@@ -386,10 +386,12 @@ body::before{content:'';position:fixed;inset:0;
       <button class="time-tab"        data-limit="365" onclick="switchTab(this)">1Y</button>
     </div>
     <div class="compare-toggle">
-      <button class="compare-btn active" id="btnBtcChart" onclick="setCompareMode(false)">BTC candles</button>
-      <button class="compare-btn" id="btnCompareChart" onclick="setCompareMode(true)">Compare vs stocks</button>
+      <button class="compare-btn active" id="btnBtcChart" onclick="setChartMode('btc')">BTC candles</button>
+      <button class="compare-btn" id="btnCompareChart" onclick="setChartMode('compare')">Compare vs stocks</button>
+      <button class="compare-btn" id="btnStockChart" onclick="setChartMode('stock')">Stock candles</button>
     </div>
     <div class="compare-chips" id="compareChips" style="display:none"></div>
+    <div class="compare-chips" id="stockChips" style="display:none"></div>
     <div class="chart-wrap">
       <div class="chart-msg" id="chartMsg">Loading chart…</div>
       <div class="chart-msg" id="compareMsg">Loading compare…</div>
@@ -397,6 +399,7 @@ body::before{content:'';position:fixed;inset:0;
       <canvas id="compareChart"></canvas>
     </div>
     <div class="stocks-note" id="compareNote" style="display:none">Rebased to 100 at the start of the period · stock trading days only · BTC weekend moves appear at the next trading day.</div>
+    <div class="stocks-note" id="stockNote" style="display:none">Daily stock candles · delayed · snapshot Oct 30, 2026 · 1D intraday not available for stocks, showing 14D.</div>
   </div>
 
   <!-- MARKET INFO -->
@@ -850,7 +853,8 @@ async function switchTab(btn) {
   activeLimit = parseInt(key);
   document.querySelectorAll('.time-tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
-  if (typeof compareMode !== 'undefined' && compareMode) { renderCompare(); return; }
+  if (typeof chartMode !== 'undefined' && chartMode === 'compare') { renderCompare(); return; }
+  if (typeof chartMode !== 'undefined' && chartMode === 'stock') { renderStockCandles(); return; }
 
   $('chartMsg').textContent = 'Loading chart…';
   $('chartMsg').style.display = 'flex';
@@ -1482,6 +1486,7 @@ function renderCompanies(){
         <div class="company-stat"><div class="company-stat-label">BTC held</div><div class="company-stat-val">${s.btcHeld.toLocaleString('en-US')}</div></div>
       </div>
       <button class="company-news-btn" onclick="loadCompanyNews('${sym}',this)">Load ${sym} headlines</button>
+      <button class="company-news-btn" onclick="showStockCandles('${sym}')">Show ${sym} candles</button>
       <div class="company-news" id="news-${sym}"></div></div>`;
   }).join('');
   $('stocksUpdated').textContent = 'Stocks · snapshot ' + (stockData ? stockData.asOf : 'Oct 30, 2026') + ' · holdings are filing dates, not live';
@@ -1491,7 +1496,7 @@ async function loadStocks(){
     const res = await fetch('data/stocks.json');
     if (res.ok){ const j = await res.json(); if (j.tickers) stockData = j; }
   } catch(e){ console.warn('stocks.json unavailable, using fallback', e); }
-  renderStockStrip(); renderCompanies(); renderCompareChips();
+  renderStockStrip(); renderCompanies(); renderCompareChips(); renderStockChips(); if (typeof chartMode !== 'undefined' && chartMode === 'stock') renderStockCandles();
   refreshStocksLive();
 }
 function renderCompareChips(){
@@ -1511,7 +1516,7 @@ async function refreshStocksLive(){
       if (!res.ok) throw new Error('Stooq ' + res.status);
       const txt = await res.text();
       const lines = txt.trim().split('\n').slice(1).filter(l => l.includes(','));
-      const rows = lines.map(l => { const p = l.split(','); return [p[0], parseFloat(p[4])]; }).filter(r => !isNaN(r[1]));
+      const rows = lines.map(l => { const p = l.split(','); return [p[0], parseFloat(p[1]), parseFloat(p[2]), parseFloat(p[3]), parseFloat(p[4])]; }).filter(r => !isNaN(r[4]));
       return {sym, rows};
     }));
     let updated = false;
@@ -1522,8 +1527,9 @@ async function refreshStocksLive(){
       const last = rows[rows.length-1], prev = rows[rows.length-2];
       const s = t[r.value.sym]; if (!s) return;
       if (stockData && stockData.asOf && last[0] <= stockData.asOf) return;
-      s.price = last[1]; s.changePct = ((last[1]/prev[1])-1)*100; s.prevClose = prev[1];
-      if (s.daily && s.daily.length){ if (s.daily[s.daily.length-1][0] !== last[0]) s.daily.push(last); }
+      s.price = last[4]; s.changePct = ((last[4]/prev[4])-1)*100; s.prevClose = prev[4];
+      if (s.daily && s.daily.length){ if (s.daily[s.daily.length-1][0] !== last[0]) s.daily.push([last[0], last[4]]); }
+      if (s.ohlc && s.ohlc.length){ if (s.ohlc[s.ohlc.length-1][0] !== last[0]) s.ohlc.push(last); }
       updated = true;
     });
     if (updated){
@@ -1531,21 +1537,73 @@ async function refreshStocksLive(){
       const asOf = dates.sort().pop();
       $('stocksSource').textContent = 'Daily closes updated via Stooq · as of ' + asOf + '.';
       $('stocksUpdated').textContent = 'Stocks · updated via Stooq · as of ' + asOf + ' · holdings are filing dates, not live';
-      renderStockStrip(); renderCompanies(); if (compareMode) renderCompare();
+      renderStockStrip(); renderCompanies(); if (compareMode) renderCompare(); if (typeof chartMode !== 'undefined' && chartMode === 'stock') renderStockCandles();
     }
   } catch(e){ console.warn('Stooq update failed, keeping snapshot', e); }
 }
-function setCompareMode(on){
-  compareMode = on;
-  $('btnBtcChart').classList.toggle('active', !on);
-  $('btnCompareChart').classList.toggle('active', on);
-  $('compareChips').style.display = on ? 'flex' : 'none';
-  $('compareNote').style.display = on ? 'block' : 'none';
-  if (on){ $('priceChart').style.display = 'none'; $('chartMsg').style.display = 'none'; renderCompare(); }
+let chartMode = 'btc';
+let stockTicker = 'MSTR';
+function setChartMode(mode){
+  chartMode = mode; compareMode = (mode === 'compare');
+  $('btnBtcChart').classList.toggle('active', mode === 'btc');
+  $('btnCompareChart').classList.toggle('active', mode === 'compare');
+  $('btnStockChart').classList.toggle('active', mode === 'stock');
+  $('compareChips').style.display = mode === 'compare' ? 'flex' : 'none';
+  $('stockChips').style.display = mode === 'stock' ? 'flex' : 'none';
+  $('compareNote').style.display = mode === 'compare' ? 'block' : 'none';
+  $('stockNote').style.display = mode === 'stock' ? 'block' : 'none';
+  if (mode === 'compare'){ $('priceChart').style.display = 'none'; $('chartMsg').style.display = 'none'; renderCompare(); }
+  else if (mode === 'stock'){ $('compareChart').style.display = 'none'; $('compareMsg').style.display = 'none'; renderStockCandles(); }
   else {
     $('compareChart').style.display = 'none'; $('compareMsg').style.display = 'none';
     const activeTab = document.querySelector('.time-tab.active'); if (activeTab) switchTab(activeTab);
   }
+}
+function setCompareMode(on){ setChartMode(on ? 'compare' : 'btc'); }
+function renderStockChips(){
+  $('stockChips').innerHTML = STOCK_ORDER.map(sym =>
+    `<button class="compare-chip ${stockTicker===sym?'active':''}" onclick="selectStockTicker('${sym}',this)">${sym}</button>`).join('');
+}
+function selectStockTicker(sym, btn){
+  stockTicker = sym;
+  document.querySelectorAll('#stockChips .compare-chip').forEach(b => b.classList.remove('active')); btn.classList.add('active');
+  renderStockCandles();
+}
+function showStockCandles(sym){
+  stockTicker = sym; renderStockChips(); setChartMode('stock');
+  document.getElementById('chartSection').scrollIntoView({behavior:'smooth'});
+}
+function renderStockCandles(){
+  if (chartMode !== 'stock') return;
+  const t = stockTickers(); const s = t[stockTicker];
+  if (!s || !s.ohlc || !s.ohlc.length){
+    $('chartMsg').textContent = 'Stock candles unavailable for ' + stockTicker + ' — daily OHLC not in snapshot.';
+    $('chartMsg').style.display = 'flex'; $('priceChart').style.display = 'none'; return;
+  }
+  const period = activeLimit === 1 ? 14 : activeLimit;
+  const slice = s.ohlc.slice(-period);
+  const data = slice.map(d => ({x: new Date(d[0] + 'T00:00:00Z').getTime(), o: d[1], h: d[2], l: d[3], c: d[4]}));
+  $('chartMsg').style.display = 'none'; $('compareMsg').style.display = 'none';
+  const canvas = $('priceChart'); canvas.style.display = 'block'; $('compareChart').style.display = 'none';
+  if (chartInst) chartInst.destroy();
+  const timeUnit = period <= 30 ? 'day' : 'month';
+  chartInst = new Chart(canvas, {type: 'candlestick', data: {datasets: [{label: stockTicker + '/USD', data,
+    color: {up: '#00e676', down: '#ff4545', unchanged: '#4e6a88'},
+    borderColor: {up: '#00e676', down: '#ff4545', unchanged: '#4e6a88'}}]},
+    options: {responsive: true, maintainAspectRatio: false, animation: {duration: 500},
+      plugins: {legend: {display: false},
+        tooltip: {backgroundColor: '#0e1420', borderColor: '#1e2d45', borderWidth: 1, titleColor: '#4e6a88', bodyColor: '#e8edf5',
+          titleFont: {family: 'Share Tech Mono', size: 10}, bodyFont: {family: 'Share Tech Mono', size: 11},
+          callbacks: {label: ctx => { const d = ctx.raw; return [` O: $${d.o.toFixed(2)}`, ` H: $${d.h.toFixed(2)}`, ` L: $${d.l.toFixed(2)}`, ` C: $${d.c.toFixed(2)}`]; }}}},
+      scales: {x: {type: 'timeseries', time: {unit: timeUnit},
+        ticks: {color: '#4e6a88', font: {family: 'Share Tech Mono', size: 9}, maxRotation: 0, maxTicksLimit: 6},
+        grid: {color: 'rgba(30,45,69,0.4)'}, border: {display: false}},
+        y: {position: 'right',
+          ticks: {color: '#4e6a88', font: {family: 'Share Tech Mono', size: 9}, callback: v => '$' + v},
+          grid: {color: 'rgba(30,45,69,0.4)'}, border: {display: false}}}}});
+  $('stockNote').textContent = activeLimit === 1
+    ? 'Daily stock candles · 1D intraday not available for stocks, showing 14D · delayed · snapshot Oct 30, 2026.'
+    : 'Daily stock candles · delayed · snapshot Oct 30, 2026.';
 }
 async function renderCompare(){
   if (!compareMode) return;
