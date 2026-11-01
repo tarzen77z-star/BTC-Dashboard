@@ -370,7 +370,7 @@ body::before{content:'';position:fixed;inset:0;
   <div class="section" id="stocksSection">
     <div class="section-title">BTC Stocks <a href="#companiesSection" style="font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--gold);text-decoration:none">SEE ALL &rarr;</a></div>
     <div class="stock-strip" id="stockStrip"><div class="news-loading">Loading stocks…</div></div>
-    <div class="stocks-note">Stocks trade Mon–Fri. BTC trades 24/7. Day % is the last regular session. <span id="stocksSource">Delayed daily closes · snapshot Oct 30, 2026.</span></div>
+    <div class="stocks-note">Stocks trade Mon–Fri. BTC trades 24/7. Day % is the last regular session. vs BTC compares that session move to BTC's close-to-close over the same stock dates — not BTC's rolling 24h, so it does not drift on weekends. <span id="stocksSource">Delayed daily closes · snapshot Oct 30, 2026.</span></div>
   </div>
 
   <div class="desk-row row-chart">
@@ -1486,15 +1486,56 @@ function renderStockStrip(){
   }).join('');
   updateStocksVsBtc();
 }
+// vs BTC, fixed to the same dates as the stock move: BTC close on the stock's
+// last session date vs BTC close on the stock's previous session date.
+// (Previous bug: it subtracted BTC's rolling 24h move, a different window,
+// so on weekends BTC kept moving while stocks were frozen and the gap drifted.)
+let btcSessionBySym = {}; // sym -> BTC session % over that stock's last session
+async function loadBtcSessionChange(){
+  try {
+    const t = stockTickers();
+    let minPrev = null, maxLast = null;
+    const datesBySym = {};
+    STOCK_ORDER.forEach(sym => {
+      const s = t[sym]; if (!s || !s.daily || s.daily.length < 2) return;
+      const last = s.daily[s.daily.length-1][0], prev = s.daily[s.daily.length-2][0];
+      datesBySym[sym] = [prev, last];
+      if (!minPrev || prev < minPrev) minPrev = prev;
+      if (!maxLast || last > maxLast) maxLast = last;
+    });
+    if (!minPrev || !maxLast) return;
+    const start = Math.floor((new Date(minPrev + 'T00:00:00Z').getTime() - 86400000) / 1000);
+    const end = Math.floor((new Date(maxLast + 'T00:00:00Z').getTime() + 86400000) / 1000);
+    const res = await fetch(`${CANDLE_BASE}?granularity=86400&start=${start}&end=${end}`);
+    if (!res.ok) throw new Error('BTC session candles ' + res.status);
+    const data = await res.json();
+    const byDate = {};
+    data.forEach(c => { byDate[new Date(c[0]*1000).toISOString().slice(0,10)] = c[4]; });
+    STOCK_ORDER.forEach(sym => {
+      const d = datesBySym[sym]; if (!d) return;
+      if (byDate[d[1]] !== undefined && byDate[d[0]] !== undefined) {
+        btcSessionBySym[sym] = ((byDate[d[1]] / byDate[d[0]]) - 1) * 100;
+      }
+    });
+    updateStocksVsBtc();
+  } catch(e){ console.warn('BTC session change unavailable, keeping rolling-24h fallback', e); }
+}
 function updateStocksVsBtc(){
-  if (!stale.stats) return;
-  const btc = parseFloat(stale.stats.percent_change_24h);
   const t = stockTickers();
   document.querySelectorAll('[data-vs]').forEach(el => {
     const s = t[el.dataset.vs]; if (!s) return;
-    const vs = s.changePct - btc;
-    el.textContent = 'vs BTC ' + (vs >= 0 ? '+' : '') + vs.toFixed(2) + '%';
-    el.style.color = pctColor(vs);
+    if (btcSessionBySym[el.dataset.vs] !== undefined) {
+      const vs = s.changePct - btcSessionBySym[el.dataset.vs];
+      el.textContent = 'vs BTC ' + (vs >= 0 ? '+' : '') + vs.toFixed(2) + '%';
+      el.style.color = pctColor(vs);
+    } else if (stale.stats) {
+      // Fallback only, labelled as rolling 24h so it is never mistaken
+      // for a same-session comparison.
+      const btc = parseFloat(stale.stats.percent_change_24h);
+      const vs = s.changePct - btc;
+      el.textContent = 'vs BTC 24h ' + (vs >= 0 ? '+' : '') + vs.toFixed(2) + '%';
+      el.style.color = pctColor(vs);
+    }
   });
 }
 function renderCompanies(){
@@ -1525,6 +1566,7 @@ async function loadStocks(){
     if (res.ok){ const j = await res.json(); if (j.tickers) stockData = j; }
   } catch(e){ console.warn('stocks.json unavailable, using fallback', e); }
   renderStockStrip(); renderCompanies(); renderCompareChips(); renderStockChips(); if (typeof chartMode !== 'undefined' && chartMode === 'stock') renderStockCandles();
+  loadBtcSessionChange();
   refreshStocksLive();
 }
 function renderCompareChips(){
@@ -1565,7 +1607,7 @@ async function refreshStocksLive(){
       const asOf = dates.sort().pop();
       $('stocksSource').textContent = 'Daily closes updated via Stooq · as of ' + asOf + '.';
       $('stocksUpdated').textContent = 'Stocks · updated via Stooq · as of ' + asOf + ' · holdings are filing dates, not live';
-      renderStockStrip(); renderCompanies(); if (compareMode) renderCompare(); if (typeof chartMode !== 'undefined' && chartMode === 'stock') renderStockCandles();
+      renderStockStrip(); renderCompanies(); if (compareMode) renderCompare(); if (typeof chartMode !== 'undefined' && chartMode === 'stock') renderStockCandles(); loadBtcSessionChange();
     }
   } catch(e){ console.warn('Stooq update failed, keeping snapshot', e); }
 }
