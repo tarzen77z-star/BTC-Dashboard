@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-11-05",
+  "asOf": "2026-11-06",
   "source": "Yahoo Finance daily closes (scheduled updater; original snapshot Finnhub 2026-10-30)",
   "note": "Delayed daily closes. Market closed weekends. Holdings are filing dates, not live.",
   "tickers": {
@@ -1065,11 +1065,15 @@
         [
           "2026-11-05",
           129.3
+        ],
+        [
+          "2026-11-06",
+          128.93
         ]
       ],
-      "price": 129.3,
-      "prevClose": 142.54,
-      "changePct": -9.2886,
+      "price": 128.93,
+      "prevClose": 129.3,
+      "changePct": -0.2862,
       "ohlc": [
         [
           "2025-10-20",
@@ -2918,6 +2922,13 @@
           141.17,
           123.89,
           129.3
+        ],
+        [
+          "2026-11-06",
+          127.83,
+          130.64,
+          125.59,
+          128.93
         ]
       ],
       "btcFoot": ""
@@ -3984,11 +3995,15 @@
         [
           "2026-11-05",
           136.82
+        ],
+        [
+          "2026-11-06",
+          134.76
         ]
       ],
-      "price": 136.82,
-      "prevClose": 151.5,
-      "changePct": -9.6898,
+      "price": 134.76,
+      "prevClose": 136.82,
+      "changePct": -1.5056,
       "ohlc": [
         [
           "2025-10-20",
@@ -5837,6 +5852,13 @@
           151.58,
           133.51,
           136.82
+        ],
+        [
+          "2026-11-06",
+          136.55,
+          139.28,
+          131.55,
+          134.76
         ]
       ],
       "btcFoot": "Investment holdings only. Plus 117 BTC held for operations = 18,071 BTC total."
@@ -6903,11 +6925,15 @@
         [
           "2026-11-05",
           5.88
+        ],
+        [
+          "2026-11-06",
+          6.35
         ]
       ],
-      "price": 5.88,
-      "prevClose": 6.87,
-      "changePct": -14.4105,
+      "price": 6.35,
+      "prevClose": 5.88,
+      "changePct": 7.9932,
       "ohlc": [
         [
           "2025-10-20",
@@ -8756,6 +8782,13 @@
           6.82,
           5.69,
           5.88
+        ],
+        [
+          "2026-11-06",
+          6.21,
+          6.42,
+          5.81,
+          6.35
         ]
       ],
       "btcFoot": "Last reported balance \u2014 Q3 report (through Sep 30) was not yet out in late Oct. At Jun 30: 26,307 unrestricted, 4,742 on loan, 4,528 pledged."
@@ -9822,11 +9855,15 @@
         [
           "2026-11-05",
           14.76
+        ],
+        [
+          "2026-11-06",
+          16.71
         ]
       ],
-      "price": 14.76,
-      "prevClose": 15.37,
-      "changePct": -3.9688,
+      "price": 16.71,
+      "prevClose": 14.76,
+      "changePct": 13.2114,
       "ohlc": [
         [
           "2025-10-20",
@@ -11675,6 +11712,13 @@
           15.4,
           12.96,
           14.76
+        ],
+        [
+          "2026-11-06",
+          15.83,
+          17.12,
+          14.87,
+          16.71
         ]
       ],
       "btcFoot": "Last reported balance (Jun 30). No newer filing confirmed here as of Nov 1. At Jun 30, 5,821 BTC was pledged as collateral; that pledge was released Sep 21."
