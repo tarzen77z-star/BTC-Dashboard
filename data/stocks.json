@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-11-09",
+  "asOf": "2026-11-10",
   "source": "Yahoo Finance daily closes (scheduled updater; original snapshot Finnhub 2026-10-30)",
   "note": "Delayed daily closes. Market closed weekends. Holdings are filing dates, not live.",
   "tickers": {
@@ -1073,11 +1073,15 @@
         [
           "2026-11-09",
           125.59
+        ],
+        [
+          "2026-11-10",
+          121.07
         ]
       ],
-      "price": 125.59,
-      "prevClose": 128.93,
-      "changePct": -2.5906,
+      "price": 121.07,
+      "prevClose": 125.59,
+      "changePct": -3.599,
       "ohlc": [
         [
           "2025-10-20",
@@ -2940,6 +2944,13 @@
           129.37,
           122.48,
           125.59
+        ],
+        [
+          "2026-11-10",
+          121.95,
+          126.4,
+          118.43,
+          121.07
         ]
       ],
       "btcFoot": ""
@@ -4014,11 +4025,15 @@
         [
           "2026-11-09",
           136.1
+        ],
+        [
+          "2026-11-10",
+          132.13
         ]
       ],
-      "price": 136.1,
-      "prevClose": 134.76,
-      "changePct": 0.9944,
+      "price": 132.13,
+      "prevClose": 136.1,
+      "changePct": -2.917,
       "ohlc": [
         [
           "2025-10-20",
@@ -5881,6 +5896,13 @@
           139.75,
           131.12,
           136.1
+        ],
+        [
+          "2026-11-10",
+          132.31,
+          136.25,
+          129.41,
+          132.13
         ]
       ],
       "btcFoot": "Investment holdings only. Plus 117 BTC held for operations = 18,071 BTC total."
@@ -5888,8 +5910,8 @@
     "MARA": {
       "name": "MARA Holdings",
       "role": "Bitcoin miner",
-      "btcHeld": 35577,
-      "btcAsOf": "2026-06-30",
+      "btcHeld": 34012,
+      "btcAsOf": "2026-09-30",
       "note": "Miner + treasury. Moves with BTC and with mining economics.",
       "daily": [
         [
@@ -6955,11 +6977,15 @@
         [
           "2026-11-09",
           6.64
+        ],
+        [
+          "2026-11-10",
+          7.34
         ]
       ],
-      "price": 6.64,
-      "prevClose": 6.35,
-      "changePct": 4.5669,
+      "price": 7.34,
+      "prevClose": 6.64,
+      "changePct": 10.5422,
       "ohlc": [
         [
           "2025-10-20",
@@ -8822,15 +8848,22 @@
           6.73,
           6.16,
           6.64
+        ],
+        [
+          "2026-11-10",
+          6.56,
+          7.58,
+          6.48,
+          7.34
         ]
       ],
-      "btcFoot": "Last reported balance \u2014 Q3 report (through Sep 30) was not yet out in late Oct. At Jun 30: 26,307 unrestricted, 4,742 on loan, 4,528 pledged."
+      "btcFoot": "Q3 2026 (through Sep 30): 34,012 BTC held, ~$2.8B at the Sep 30 price of $83,556 \u2014 14,752 unrestricted, 1,408 loaned, 17,852 pledged. After quarter-end it sold 13,597 BTC (~$1.1B) and repaid its $750M bitcoin-collateralized loans in full, releasing 17,477 pledged BTC."
     },
     "RIOT": {
       "name": "Riot Platforms",
       "role": "Bitcoin miner",
-      "btcHeld": 11380,
-      "btcAsOf": "2026-06-30",
+      "btcHeld": 2418,
+      "btcAsOf": "2026-09-30",
       "note": "Miner + treasury. Moves with BTC and with mining economics.",
       "daily": [
         [
@@ -9896,11 +9929,15 @@
         [
           "2026-11-09",
           17.66
+        ],
+        [
+          "2026-11-10",
+          18.08
         ]
       ],
-      "price": 17.66,
-      "prevClose": 16.71,
-      "changePct": 5.6852,
+      "price": 18.08,
+      "prevClose": 17.66,
+      "changePct": 2.3783,
       "ohlc": [
         [
           "2025-10-20",
@@ -11763,9 +11800,16 @@
           17.9,
           16.75,
           17.66
+        ],
+        [
+          "2026-11-10",
+          17.93,
+          18.71,
+          17.23,
+          18.08
         ]
       ],
-      "btcFoot": "Last reported balance (Jun 30). No newer filing confirmed here as of Nov 1. At Jun 30, 5,821 BTC was pledged as collateral; that pledge was released Sep 21."
+      "btcFoot": "Q3 2026 (through Sep 30): 2,418 BTC held, ~$202M at the Sep 30 price of $83,554. The $200M Coinbase credit facility was repaid in full and terminated, releasing all pledged bitcoin."
     }
   }
 }
