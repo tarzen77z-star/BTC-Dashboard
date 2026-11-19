@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-11-18",
+  "asOf": "2026-11-19",
   "source": "Yahoo Finance daily closes (scheduled updater; original snapshot Finnhub 2026-10-30)",
   "note": "Delayed daily closes. Market closed weekends. Holdings are filing dates, not live.",
   "tickers": {
@@ -1101,11 +1101,15 @@
         [
           "2026-11-18",
           90.32
+        ],
+        [
+          "2026-11-19",
+          86.13
         ]
       ],
-      "price": 90.32,
-      "prevClose": 96.5,
-      "changePct": -6.4041,
+      "price": 86.13,
+      "prevClose": 90.32,
+      "changePct": -4.6391,
       "ohlc": [
         [
           "2025-10-20",
@@ -3017,6 +3021,13 @@
           95.51,
           90.2,
           90.32
+        ],
+        [
+          "2026-11-19",
+          93.11,
+          93.82,
+          86.02,
+          86.13
         ]
       ],
       "btcFoot": ""
@@ -4119,11 +4130,15 @@
         [
           "2026-11-18",
           110.51
+        ],
+        [
+          "2026-11-19",
+          108.87
         ]
       ],
-      "price": 110.51,
-      "prevClose": 115.02,
-      "changePct": -3.9211,
+      "price": 108.87,
+      "prevClose": 110.51,
+      "changePct": -1.484,
       "ohlc": [
         [
           "2025-10-20",
@@ -6035,6 +6050,13 @@
           115.7,
           109.94,
           110.51
+        ],
+        [
+          "2026-11-19",
+          114.43,
+          115.54,
+          108.8,
+          108.87
         ]
       ],
       "btcFoot": "Investment holdings only. Plus 117 BTC held for operations = 18,071 BTC total."
@@ -7137,11 +7159,15 @@
         [
           "2026-11-18",
           6.56
+        ],
+        [
+          "2026-11-19",
+          6.24
         ]
       ],
-      "price": 6.56,
-      "prevClose": 6.42,
-      "changePct": 2.1807,
+      "price": 6.24,
+      "prevClose": 6.56,
+      "changePct": -4.878,
       "ohlc": [
         [
           "2025-10-20",
@@ -9053,6 +9079,13 @@
           6.72,
           6.3,
           6.56
+        ],
+        [
+          "2026-11-19",
+          6.85,
+          6.97,
+          6.21,
+          6.24
         ]
       ],
       "btcFoot": "Q3 2026 (through Sep 30): 34,012 BTC held, ~$2.8B at the Sep 30 price of $83,556 \u2014 14,752 unrestricted, 1,408 loaned, 17,852 pledged. After quarter-end it sold 13,597 BTC (~$1.1B) and repaid its $750M bitcoin-collateralized loans in full, releasing 17,477 pledged BTC."
@@ -10155,11 +10188,15 @@
         [
           "2026-11-18",
           18.24
+        ],
+        [
+          "2026-11-19",
+          17.73
         ]
       ],
-      "price": 18.24,
-      "prevClose": 17.05,
-      "changePct": 6.9795,
+      "price": 17.73,
+      "prevClose": 18.24,
+      "changePct": -2.7961,
       "ohlc": [
         [
           "2025-10-20",
@@ -12071,6 +12108,13 @@
           18.7,
           17.23,
           18.24
+        ],
+        [
+          "2026-11-19",
+          19.45,
+          19.79,
+          17.46,
+          17.73
         ]
       ],
       "btcFoot": "Q3 2026 (through Sep 30): 2,418 BTC held, ~$202M at the Sep 30 price of $83,554. The $200M Coinbase credit facility was repaid in full and terminated, releasing all pledged bitcoin."
